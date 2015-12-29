@@ -12,20 +12,22 @@ public class Sat {
 	 * @param args
 	 * @throws Exception
 	 */
-	public static void main(String[] args) throws Exception {
+	public static String main(String[] args) throws Exception {
 		String sat = "abc!d&|&";
 		Expression e = buildTree(sat);
-		System.out.println(e);
 		boolean[] solution = solve(e, variableCount(sat));
+		String result = "";
 		if (solution != null) {
 			for (int i = 0; i < solution.length; i++) {
-				System.out.print((char) (97 + i));
+				result += (char) (97 + i);
 			}
-			System.out.println();
+			result += "\n";
 			for (int i = 0; i < solution.length; i++) {
-				System.out.print(solution[i] ? '1' : '0');
+				result += (solution[i] ? '1' : '0');
 			}
 		}
+		
+		return result;
 	}
 
 	public static boolean[] solve(Expression e, int variableCount) {
@@ -70,24 +72,17 @@ public class Sat {
 				e.name = c;
 				stack.push(e);
 			} else {
-				switch (c) {
-					case '&':
-					case '|': {
+				if(c == '&' || c == '|'){
 						Expression e = new Expression();
 						e.operator = c == '&' ? AND : OR;
 						e.right = stack.pop();
 						e.left = stack.pop();
 						stack.push(e);
-					}
-					break;
-
-					case '!': {
+				}else if (c == '!'){
 						Expression e = new Expression();
 						e.operator = NOT;
 						e.left = stack.pop();
 						stack.push(e);
-					}
-					break;
 				}
 			}
 		}
@@ -96,6 +91,39 @@ public class Sat {
 	}
 }
 
+class Expression {
+	char name;
+	Expression left;
+	Expression right;
+	int operator;
+
+	public boolean evaluate(boolean[] instance) {
+		if (name > 0) {
+			return instance[name - 97];
+		}
+		if (operator == Sat.NOT) {
+			return !left.evaluate(instance);
+		}
+		if (operator == Sat.AND) {
+			return left.evaluate(instance) && right.evaluate(instance);
+		}
+		if (operator == Sat.OR) {
+			return left.evaluate(instance) || right.evaluate(instance);
+		}
+		return false;
+	}
+
+	@Override
+	public String toString() {
+		if (name > 0) {
+			return Character.toString(name);
+		}
+		if (operator == Sat.NOT) {
+			return "!" + left.toString();
+		}
+		return "(" + left.toString() + (operator == Sat.AND ? " & " : " | ") + right.toString() + ")";
+	}
+}
 
 
 

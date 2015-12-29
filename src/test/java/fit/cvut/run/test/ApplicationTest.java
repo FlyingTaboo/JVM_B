@@ -19,33 +19,33 @@ public class ApplicationTest {
 	private static final String ExpressionClassFile = DELIMITER + "Expression.class";
 	
     @Test
-    public void testMain() throws Exception { // spuštění prázdné aplikace projde bez vyjímky
+    public void testMain() throws Exception { 
         JVM.main(null);
     }
     
     @Test(expected=java.lang.Exception.class)
-    public void testDirectory() throws Exception{ // Spuštění s odkazem na adresář
+    public void testDirectory() throws Exception{ 
     	JVM.main(new String[] {new java.io.File( "." ).getCanonicalPath()+TEST_CLASSES_PATH});
     }
     
     @Test(expected=java.lang.Exception.class)
-    public void testWrongPath() throws Exception{ // Spuštění s odkazem na neplatnou cestu
+    public void testWrongPath() throws Exception{ 
     	JVM.main(new String[] {"wrong path"});
     }
     
     @Test()
-    public void testSimpleRightPath() throws Exception{ // Jednoduché puštění s odkazem na platnou cestu
+    public void testSimpleRightPath() throws Exception{
     	//JVM.main(new String[] {new java.io.File( "." ).getCanonicalPath()+TEST_CLASSES_PATH + TestClassFile001});
     }
     
     @Test(expected=java.lang.Exception.class)
-    public void testSimpleRightPathBadFile() throws Exception{ // Jednoduché puštění s odkazem na platnou cestu ale chybný soubor
+    public void testSimpleRightPathBadFile() throws Exception{ 
     	JVM.main(new String[] {new java.io.File( "." ).getCanonicalPath()+ TestWrongFile});
     }
     
     @Test
-    public void testSatRightPath() throws Exception{ // Jednoduché puštění s odkazem na platnou cestu ale chybný soubor
-    	JVM.main(new String[] {new java.io.File( "." ).getCanonicalPath()+TEST_CLASSES_PATH + SatClassFile, new java.io.File( "." ).getCanonicalPath()+TEST_CLASSES_PATH + ExpressionClassFile});
+    public void testSatRightPath() throws Exception{ 
+    	JVM.main(new String[] {new java.io.File( "." ).getCanonicalPath()+TEST_CLASSES_PATH + SatClassFile});
     	//JVM.main(new String[] {new java.io.File( "." ).getCanonicalPath()+TEST_CLASSES_PATH + ExpressionClassFile});
     }
     

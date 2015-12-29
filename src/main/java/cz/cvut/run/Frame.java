@@ -10,16 +10,27 @@ import cz.cvut.run.attributes.LocalVariable;
 import cz.cvut.run.attributes.LocalVariableTableAttribute;
 import cz.cvut.run.classfile.ConstantPoolElement;
 import cz.cvut.run.classfile.Method;
+import cz.cvut.run.classfile.constantpool.ConstClassInfo;
+import cz.cvut.run.classfile.constantpool.ConstFieldRefInfo;
+import cz.cvut.run.classfile.constantpool.ConstMethodRefInfo;
+import cz.cvut.run.classfile.constantpool.ConstNameAndTypeInfo;
 import cz.cvut.run.constants.Constants;
+import cz.cvut.run.stack.ArrayReference;
+import cz.cvut.run.stack.ByteValue;
+import cz.cvut.run.stack.CharacterReference;
+import cz.cvut.run.stack.ExceptionReference;
 import cz.cvut.run.stack.IntValue;
 import cz.cvut.run.stack.Null;
+import cz.cvut.run.stack.ObjectReference;
 import cz.cvut.run.stack.Reference;
 import cz.cvut.run.stack.StackElement;
+import cz.cvut.run.stack.StackReference;
+import cz.cvut.run.stack.StringBuilderReference;
+import cz.cvut.run.stack.StringReference;
 import cz.cvut.run.utils.Utils;
 
 public class Frame {
     private static final Logger log = Logger.getLogger(Frame.class);
-	private LocalVariableTableAttribute localVariables;
 	private StackElement[] localVariablesArray;
 	private Stack<StackElement> operandStack = new Stack<StackElement>();
 	private ArrayList<ConstantPoolElement> constantPool;
@@ -31,24 +42,27 @@ public class Frame {
 	@SuppressWarnings("unused")
 	private int codeIndex = 0;
 	int lineNumberTableIndex;
-	int localVariableTableIndex;
+	private ClassFile cf;
 	
-	Frame(Method m, ArrayList<ConstantPoolElement> cp, Heap heap, int codeIndex, int localVariableTableIndex, int lineNumberTableIndex) throws Exception{
+	public Frame(Method m, ClassFile cf, Heap heap, int codeIndex, int lineNumberTableIndex, StackElement[] locals, Stack<StackElement> operandStack) throws Exception {
 		this.method = m;
-		
 		byteCode = m.getCode(codeIndex);
-		
-		this.constantPool = cp;
+		this.cf = cf;
+		this.constantPool = cf.getConstantPool();
 		this.heap = heap;
 		this.codeIndex = codeIndex;
 		this.lineNumberTableIndex = lineNumberTableIndex;
-		this.localVariableTableIndex = localVariableTableIndex;
 		this.codeAttribute = m.getCodeAttribute(codeIndex);
-		this.localVariables = this.codeAttribute.getLocalVariableTableAttribute(localVariableTableIndex);
 		localVariablesArray = new StackElement[codeAttribute.getMaxLocals()];
+		for (int i=0; locals!=null && i<locals.length; i++){
+			localVariablesArray[i] = locals[i];
+		}
+		if (operandStack != null) {
+			this.operandStack = operandStack;
+		}
 	}
-	
-	
+
+
 	public Stack<StackElement> getStackResult(){
 		return this.operandStack;
 	}
@@ -61,7 +75,7 @@ public class Frame {
 	}
 	
 	
-	public void execute() throws Exception{
+	public StackElement execute() throws Exception{
 
     	int pc = 0;
     	while (byteCode.size() > pc){
@@ -69,7 +83,6 @@ public class Frame {
     		pc++;
     		Utils.getInstructionName(instruction);
     		log.info("Instruction: " + Utils.getInstructionName(instruction));
-    		
     		switch (instruction){
 				case Constants.INSTRUCTION_aconst_null: {
 					// neber zadne atributy z bytecode
@@ -100,8 +113,8 @@ public class Frame {
 				}
 				case Constants.INSTRUCTION_areturn: {
 					// nebere zadne atributy z bytecode
-					
-					break;
+					log.info(operandStack);
+			    	return operandStack.pop();
 				}
 				case Constants.INSTRUCTION_arraylength: {
 					// nebere zadne atributy z bytecode
@@ -127,12 +140,23 @@ public class Frame {
 				}
 				case Constants.INSTRUCTION_baload: {
 					// nebere zadne atributy z bytecode
-					
+					StackElement e1 = operandStack.pop();
+					StackElement e2 = operandStack.pop();
+					IntValue index = (IntValue) e1;
+					ArrayReference array = (ArrayReference) e2;
+					Object o = array.getValue(index.getIntValue());
+					operandStack.push(new ByteValue(o));
 					break;
 				}
 				case Constants.INSTRUCTION_bastore: {
 					// nebere zadne atributy z bytecode
-					
+					StackElement e1 = operandStack.pop();
+					StackElement e2 = operandStack.pop();
+					StackElement e3 = operandStack.pop();
+					ByteValue value = (ByteValue) e1;
+					IntValue index = (IntValue) e2;
+					ArrayReference array = (ArrayReference) e3;
+					array.setValue(index.getIntValue(), value);
 					break;
 				}
 				case Constants.INSTRUCTION_bipush: {
@@ -145,15 +169,12 @@ public class Frame {
 					operandStack.push(e);
 					break;
 				}
-				case Constants.INSTRUCTION_getfield: {
-					byte index1 = byteCode.get(pc++);
-					byte index2 = byteCode.get(pc++);
-					break;
-				}
 				case Constants.INSTRUCTION_getstatic: {
 					byte index1 = byteCode.get(pc++);
 					byte index2 = byteCode.get(pc++);
-					
+					short s = (short) ((index1 << 8) | index2);
+					ConstantPoolElement e = this.constantPool.get(s);
+					operandStack.push(new StackElement(e)); //TODO - vklada se tam pouze fieldRef
 					break;
 				}
 				case Constants.INSTRUCTION_goto: {
@@ -166,6 +187,16 @@ public class Frame {
 				case Constants.INSTRUCTION_checkcast: {
 					byte index1 = byteCode.get(pc++);
 					byte index2 = byteCode.get(pc++);
+					StackElement e = operandStack.pop();
+					if (e instanceof Null){
+						operandStack.push(new Null());
+					}else if (e instanceof Reference){
+						if(true){	//TODO
+							operandStack.push(e);
+						}else{
+							throw new ClassCastException();
+						}
+					}
 					break;
 				}
 				case Constants.INSTRUCTION_i2c: {
@@ -202,6 +233,17 @@ public class Frame {
 				}
 				case Constants.INSTRUCTION_iconst_3: {
 					operandStack.push(new IntValue(3));
+					break;
+				}
+				case Constants.INSTRUCTION_if_icmpeq: {
+					byte branchbyte1 = byteCode.get(pc++);
+					byte branchbyte2 = byteCode.get(pc++);
+					short s = (short) ((branchbyte1 << 8) | branchbyte2);
+					IntValue value1 = (IntValue) operandStack.pop();
+					IntValue value2 = (IntValue) operandStack.pop();
+					if (value1.getIntValue() == value2.getIntValue()){
+						//TODO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! pc = pc-3 + s;
+					}
 					break;
 				}
 				case Constants.INSTRUCTION_if_icmpge: {
@@ -307,29 +349,86 @@ public class Frame {
 					break;
 				}
 				case Constants.INSTRUCTION_invokespecial: {
-					byte arg0 = byteCode.get(pc++);
-					byte arg1 = byteCode.get(pc++);
-					log.info("invokespecial args: " + Utils.getHexa(arg0) + " " + Utils.getHexa(arg1));
+					byte index1 = byteCode.get(pc++);
+					byte index2 = byteCode.get(pc++);
 					
-					//operandStack.push()
-					//Instructions.invokeSpecial(stack, arg0, arg1, cf);
+					int methodIndex = ((index1 << 8) | index2);
+					ConstMethodRefInfo m = (ConstMethodRefInfo) constantPool.get(methodIndex-1);
+					
+					int indexName = m.getNameAndTypeIndex()-1;
+					ConstNameAndTypeInfo methodNameType = (ConstNameAndTypeInfo) constantPool.get(indexName);
+					
+					int methodDescIndex = methodNameType.getDescriptorIndex()-1;
+					int methodNameIndex = methodNameType.getNameIndex()-1;
+					
+					if (constantPool.get(methodNameIndex).toString().equals("<init>")) break;
+					int methodAttributesCount =  Utils.getMethodAttributesCount(constantPool.get(methodDescIndex));
+					Stack<StackElement> stack = new Stack<StackElement>();
+					stack.push(operandStack.pop());
+					StackElement[] locals = new StackElement[methodAttributesCount];
+					for(int i=0; i<methodAttributesCount; i++){
+						locals[i] = operandStack.pop();
+					}
+					Method method = cf.getMethodByName(constantPool.get(methodNameIndex).toString());
+					log.info("Invoke method: " + constantPool.get(methodNameIndex).toString());
+					Frame f = new Frame(method, this.cf, heap, this.codeIndex, this.lineNumberTableIndex, locals, stack);
+					operandStack.push(f.execute());
 					break;
 				}
 				case Constants.INSTRUCTION_invokestatic: {
 					byte index1 = byteCode.get(pc++);
 					byte index2 = byteCode.get(pc++);
+					
+					int methodIndex = ((index1 << 8) | index2);
+					ConstMethodRefInfo m = (ConstMethodRefInfo) constantPool.get(methodIndex-1);
+					
+					int indexName = m.getNameAndTypeIndex()-1;
+					ConstNameAndTypeInfo methodNameType = (ConstNameAndTypeInfo) constantPool.get(indexName);
+					
+					int methodDescIndex = methodNameType.getDescriptorIndex()-1;
+					int methodNameIndex = methodNameType.getNameIndex()-1;
+					
+					int methodAttributesCount =  Utils.getMethodAttributesCount(constantPool.get(methodDescIndex));
+					StackElement[] locals = new StackElement[methodAttributesCount];
+					for(int i=0; i<methodAttributesCount; i++){
+						locals[i] = operandStack.pop();
+					}
+					Method method = cf.getMethodByName(constantPool.get(methodNameIndex).toString());
+					log.info("Invoke method: " + constantPool.get(methodNameIndex).toString());
+					Frame f = new Frame(method, this.cf, heap, this.codeIndex, this.lineNumberTableIndex, locals, null);
+					operandStack.push(f.execute());
 					break;
 				}
 				case Constants.INSTRUCTION_invokevirtual: {
 					byte index1 = byteCode.get(pc++);
 					byte index2 = byteCode.get(pc++);
 					
+					int methodIndex = ((index1 << 8) | index2);
+					ConstMethodRefInfo m = (ConstMethodRefInfo) constantPool.get(methodIndex-1);
+					
+					int indexName = m.getNameAndTypeIndex()-1;
+					ConstNameAndTypeInfo methodNameType = (ConstNameAndTypeInfo) constantPool.get(indexName);
+					
+					int methodDescIndex = methodNameType.getDescriptorIndex()-1;
+					int methodNameIndex = methodNameType.getNameIndex()-1;
+					
+					int methodAttributesCount =  Utils.getMethodAttributesCount(constantPool.get(methodDescIndex));
+					Stack<StackElement> stack = new Stack<StackElement>();
+					stack.push(operandStack.pop());
+					StackElement[] locals = new StackElement[methodAttributesCount];
+					for(int i=0; i<methodAttributesCount; i++){
+						locals[i] = operandStack.pop();
+					}
+					Method method = cf.getMethodByName(constantPool.get(methodNameIndex).toString());
+					log.info("Invoke method: " + constantPool.get(methodNameIndex).toString());
+					Frame f = new Frame(method, this.cf, heap, this.codeIndex, this.lineNumberTableIndex, locals, stack);
+					operandStack.push(f.execute());
 					break;
 				}
 				case Constants.INSTRUCTION_ireturn: {
 					// neni nic treba brat z bytecode
-					
-					break;
+					log.info(operandStack);
+			    	return operandStack.pop();
 				}
 				case Constants.INSTRUCTION_ishl: {
 					IntValue value1 = (IntValue) operandStack.pop();
@@ -364,6 +463,9 @@ public class Frame {
 				case Constants.INSTRUCTION_new: {
 					byte index1 = byteCode.get(pc++);
 					byte index2 = byteCode.get(pc++);
+					int index = ((index1 << 8) | index2)-1;
+					ConstClassInfo clazz = (ConstClassInfo)constantPool.get(index); 
+					operandStack.push(createNewObject(constantPool.get(clazz.getNameIndex()-1).toString()));
 					break;
 				}
 				case Constants.INSTRUCTION_newarray: {
@@ -386,7 +488,7 @@ public class Frame {
 				}
 				case Constants.INSTRUCTION_return: {
 					// neni nic treba brat z bytecode
-					//TODO operandStack.clear();
+					operandStack.clear();
 					break;
 				}
 				default:{
@@ -396,8 +498,27 @@ public class Frame {
     	}
     	
     	log.info(operandStack);
-    	
+    	return operandStack.pop();
     	
     	
     }
+	
+	private Reference createNewObject(String clazz){
+		Object o = null;
+		if (clazz.equals("java\\util\\Stack")){
+			return new StackReference(new Stack());
+		}else if (clazz.equals("java\\lang\\StringBuilder")){
+			return new StringBuilderReference(new StringBuilder());
+		}else if (clazz.equals("java\\lang\\Exception")){
+			return new ExceptionReference(new Exception());
+		}else if (clazz.equals("java\\lang\\String")){
+			return new StringReference(new String());
+		}else if (clazz.equals("java\\lang\\Character")){
+			return new CharacterReference(new Character(' '));
+		}
+		
+		return new ObjectReference(o);
+	}
 }
+
+

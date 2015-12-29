@@ -5,17 +5,17 @@ import cz.cvut.run.constants.Constants;
 import cz.cvut.run.utils.Utils;
 
 public class ConstNameAndTypeInfo extends ConstantPoolElement {
-	private int classIndex;
+	private int nameIndex;
 	private int descriptorIndex;
 	
 	public ConstNameAndTypeInfo(byte[] classIndex, byte[] descriptorIndex){
 		this.tag = Constants.TAG_NAME_AND_TYPE;
-		this.classIndex = Utils.parseByteToInt(classIndex);
+		this.nameIndex = Utils.parseByteToInt(classIndex);
 		this.descriptorIndex = Utils.parseByteToInt(descriptorIndex);
 	}
 
-	public int getClassIndex(){
-		return this.classIndex;
+	public int getNameIndex(){
+		return this.nameIndex;
 	}
 	
 	public int getDescriptorIndex(){

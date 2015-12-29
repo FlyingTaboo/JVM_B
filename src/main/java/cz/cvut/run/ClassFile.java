@@ -124,15 +124,7 @@ public class ClassFile {
 	}
 	
 	public Method getInitMethod() throws Exception{
-		for(Method m: this.methods){
-			int nameIndex = m.getName_index()-1;
-			log.info(this.constantPool.get(nameIndex));
-			if (this.constantPool.get(nameIndex).toString().equals(Constants.INIT)){
-				return m;
-			}
-		}
-		log.error("Not found INIT method in class file!");
-		throw new Exception("Not found INIT method in class file!");
+		return getMethodByName(Constants.INIT.toString());
 	}
 	
 	public int getCodeIndex(){
@@ -147,15 +139,7 @@ public class ClassFile {
 		return -1;
 	}
 	public Method getMainMethod() throws Exception {
-		for(Method m: this.methods){
-			int nameIndex = m.getName_index()-1;
-			log.info(this.constantPool.get(nameIndex));
-			if (this.constantPool.get(nameIndex).toString().equals(Constants.MAIN)){
-				return m;
-			}
-		}
-		log.error("Not found MAIN method in class file!");
-		throw new Exception("Not found MAIN method in class file!");
+		return getMethodByName(Constants.MAIN.toString());
 	}
 	public int getLineNumberTableIndex() {
 		for(int i=0; i<constantPool.size(); i++){
@@ -178,6 +162,16 @@ public class ClassFile {
 			}
 		}
 		return -1;
+	}
+	public Method getMethodByName(String name) throws Exception {
+		for(Method m: this.methods){
+			int nameIndex = m.getName_index()-1;
+			if (this.constantPool.get(nameIndex).toString().equals(name)){
+				return m;
+			}
+		}
+		log.error("Not found method " + name + " in class file!");
+		throw new Exception("Not found method " + name + " in class file!");
 	}
 	
 }

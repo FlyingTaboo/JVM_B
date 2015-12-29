@@ -3,7 +3,9 @@ package cz.cvut.run.utils;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 
+import cz.cvut.run.classfile.ConstantPoolElement;
 import cz.cvut.run.constants.Constants;
+import cz.cvut.run.stack.StackElement;
 
 public class Utils {
 
@@ -73,6 +75,14 @@ public class Utils {
 		
 		return String.format(format, inputObject);
 	}
+
+	public static int getMethodAttributesCount(ConstantPoolElement constantPoolElement) {
+		String descriptor = constantPoolElement.toString();
+		descriptor = descriptor.replace("(", "").replace(")", "");
+		String[] attrs = descriptor.split(";");
+		return attrs.length-1;
+	}
+
 	
 	
 	
