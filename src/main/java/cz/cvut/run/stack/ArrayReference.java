@@ -7,11 +7,17 @@ public class ArrayReference extends Reference {
 	}
 
 	public Object getValue(int index){
-		return 0;
-		//TODO - doplnit
+		boolean[] val = (boolean[]) this.value;
+		return val[index];
 	}
 	
 	public void setValue(int index, Object value){
-		//TODO - doplnit
+		boolean[] val = (boolean[]) this.value;
+		val[index] = (Boolean) value;
+	}
+	
+	public IntValue getLength(){
+		boolean[] val = (boolean[]) this.value;
+		return new IntValue(val.length);
 	}
 }

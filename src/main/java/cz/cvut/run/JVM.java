@@ -22,7 +22,6 @@ public class JVM {
             }
             ClassFile cf = classes.get(0).getClassFile();
             int codeIndex = cf.getCodeIndex();
-            int localVariableTableIndex = cf.getLocalVariableTableIndex();
             int lineNumberTableIndex = cf.getLineNumberTableIndex();
             Method initMethod = cf.getInitMethod();
         	Method mainMethod = cf.getMainMethod();

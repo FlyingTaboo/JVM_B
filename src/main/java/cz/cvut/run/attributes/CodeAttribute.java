@@ -4,7 +4,6 @@ import java.util.ArrayList;
 
 import org.apache.log4j.Logger;
 
-import cz.cvut.run.ClassLoader;
 import cz.cvut.run.classfile.Attribute;
 import cz.cvut.run.utils.Utils;
 

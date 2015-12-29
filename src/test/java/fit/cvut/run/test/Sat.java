@@ -36,7 +36,7 @@ public class Sat {
 			for (int j = variableCount - 1; j >= 0; j--) {
 				bits[j] = (instance & (1 << j)) != 0;
 			}
-			if (e.evaluate(bits)) {
+			if (evaluate(e, bits)) {
 				return bits;
 			}
 		}
@@ -77,11 +77,13 @@ public class Sat {
 						e.operator = c == '&' ? AND : OR;
 						e.right = stack.pop();
 						e.left = stack.pop();
+						e.name = 0;
 						stack.push(e);
 				}else if (c == '!'){
 						Expression e = new Expression();
 						e.operator = NOT;
 						e.left = stack.pop();
+						e.name = 0;
 						stack.push(e);
 				}
 			}
@@ -89,30 +91,28 @@ public class Sat {
 
 		return stack.pop();
 	}
+	public static boolean evaluate(Expression e, boolean[] instance){
+		if (e.name > 0) {
+			return instance[e.name - 97];
+		}
+		if (e.operator == Sat.NOT) {
+			return !evaluate(e.left, instance);
+		}
+		if (e.operator == Sat.AND) {
+			return evaluate(e.left, instance) && evaluate(e.right, instance);
+		}
+		if (e.operator == Sat.OR) {
+			return evaluate(e.left , instance) || evaluate(e.right, instance);
+		}
+		return false;		
+	}
 }
 
 class Expression {
-	char name;
+	char name ;
 	Expression left;
 	Expression right;
 	int operator;
-
-	public boolean evaluate(boolean[] instance) {
-		if (name > 0) {
-			return instance[name - 97];
-		}
-		if (operator == Sat.NOT) {
-			return !left.evaluate(instance);
-		}
-		if (operator == Sat.AND) {
-			return left.evaluate(instance) && right.evaluate(instance);
-		}
-		if (operator == Sat.OR) {
-			return left.evaluate(instance) || right.evaluate(instance);
-		}
-		return false;
-	}
-
 	@Override
 	public String toString() {
 		if (name > 0) {

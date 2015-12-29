@@ -16,7 +16,6 @@ public class LocalVariableTableAttribute extends Attribute{
 	
 	@Override
 	public void setAttributeInfo(byte[] attributeInfo) {
-		System.out.println(Utils.getHexa(attributeInfo));
 		int p =0;
 		this.localVariableTableLength = Utils.parseByteToInt(new byte[]{attributeInfo[p++], attributeInfo[p++]});
 		for(int i=0; i<this.localVariableTableLength; i++){

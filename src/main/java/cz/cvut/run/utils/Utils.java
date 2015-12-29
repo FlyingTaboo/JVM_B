@@ -5,7 +5,6 @@ import java.util.ArrayList;
 
 import cz.cvut.run.classfile.ConstantPoolElement;
 import cz.cvut.run.constants.Constants;
-import cz.cvut.run.stack.StackElement;
 
 public class Utils {
 
@@ -36,6 +35,9 @@ public class Utils {
 		 return b & 0xFF;
 	}
 	
+	public static byte getUnsignedByte(byte b) {
+		 return (byte) (b & 0xFF);
+	}
 	public static String getHexa(byte[] input){
 		String format = "";
 		Object [] inputObject = new Object[input.length];
@@ -78,9 +80,14 @@ public class Utils {
 
 	public static int getMethodAttributesCount(ConstantPoolElement constantPoolElement) {
 		String descriptor = constantPoolElement.toString();
-		descriptor = descriptor.replace("(", "").replace(")", "");
+		descriptor =descriptor.substring(1, descriptor.indexOf(")"));
 		String[] attrs = descriptor.split(";");
-		return attrs.length-1;
+		if (attrs[attrs.length-1].isEmpty()){
+			return attrs.length-1;
+		}else{
+			return attrs.length;
+		}
+		
 	}
 
 	

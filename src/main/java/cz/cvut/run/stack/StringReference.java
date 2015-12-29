@@ -6,5 +6,9 @@ public class StringReference extends Reference {
 		super(o);
 		// TODO Auto-generated constructor stub
 	}
+	
+	public Character charAt(int position){
+		return value.toString().charAt(position);
+	}
 
 }
