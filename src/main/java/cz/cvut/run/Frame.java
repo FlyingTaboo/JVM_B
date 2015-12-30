@@ -78,6 +78,7 @@ public class Frame {
 	}
 	
 	
+	@SuppressWarnings("unused")
 	public StackElement execute() throws Exception{
 
     	int pc = 0;
@@ -247,7 +248,7 @@ public class Frame {
 				case Constants.INSTRUCTION_if_icmpeq: {
 					byte branchbyte1 = byteCode.get(pc++);
 					byte branchbyte2 = byteCode.get(pc++);
-					short s = (short) ((branchbyte1 << 8) | branchbyte2);
+					short s = (short) (((branchbyte1&0xFF) << 8) | (branchbyte2&0xFF));
 					StackElement e2 = operandStack.pop();
 					StackElement e1 = operandStack.pop();
 					IntValue value1 = null;
@@ -273,7 +274,7 @@ public class Frame {
 				case Constants.INSTRUCTION_if_icmpge: {
 					byte branchbyte1 = byteCode.get(pc++);
 					byte branchbyte2 = byteCode.get(pc++);
-					short s = (short) ((branchbyte1 << 8) | branchbyte2);
+					short s = (short) (((branchbyte1&0xFF) << 8) | (branchbyte2&0xFF));
 					StackElement e2 = operandStack.pop();
 					StackElement e1 = operandStack.pop();
 					if (e1 instanceof IntValue && e2 instanceof IntValue){
@@ -290,7 +291,7 @@ public class Frame {
 				case Constants.INSTRUCTION_if_icmplt: {
 					byte branchbyte1 = byteCode.get(pc++);
 					byte branchbyte2 = byteCode.get(pc++);
-					short s = (short) ((branchbyte1 << 8) | branchbyte2);
+					short s = (short) (((branchbyte1&0xFF) << 8) | (branchbyte2&0xFF));
 					
 					StackElement e2 = operandStack.pop();
 					StackElement e1 = operandStack.pop();
@@ -308,7 +309,7 @@ public class Frame {
 				case Constants.INSTRUCTION_if_icmpne: {
 					byte branchbyte1 = byteCode.get(pc++);
 					byte branchbyte2 = byteCode.get(pc++);
-					short s = (short) ((branchbyte1 << 8) | branchbyte2);
+					short s = (short) (((branchbyte1&0xFF) << 8) | (branchbyte2&0xFF));
 					StackElement e2 = operandStack.pop();
 					StackElement e1 = operandStack.pop();
 
@@ -331,10 +332,10 @@ public class Frame {
 					}
 					break;
 				}
-				case Constants.INSTRUCTION_ifeq: {//TODO kontrola
+				case Constants.INSTRUCTION_ifeq: {
 					byte branchbyte1 = byteCode.get(pc++);
 					byte branchbyte2 = byteCode.get(pc++);
-					short s = (short) ((branchbyte1 << 8) | branchbyte2);
+					short s = (short) (((branchbyte1&0xFF) << 8) | (branchbyte2&0xFF));
 					StackElement e1 = operandStack.pop();
 					if (e1 instanceof IntValue){
 						IntValue value = (IntValue) e1;
@@ -345,15 +346,13 @@ public class Frame {
 						if (((Boolean) e1.getValue()) == false){
 							pc = pc-3 + s;
 						}
-					}else{
-						log.error("ERROR");
 					}
 					break;
 				}
 				case Constants.INSTRUCTION_ifle: {
 					byte branchbyte1 = byteCode.get(pc++);
 					byte branchbyte2 = byteCode.get(pc++);
-					short s = (short) ((branchbyte1 << 8) | branchbyte2);
+					short s = (short) (((branchbyte1&0xFF) << 8) | (branchbyte2&0xFF));
 					StackElement se = operandStack.pop();
 					IntValue value = null;
 					if (se instanceof IntValue){
@@ -370,7 +369,7 @@ public class Frame {
 				case Constants.INSTRUCTION_ifge: {
 					byte branchbyte1 = byteCode.get(pc++);
 					byte branchbyte2 = byteCode.get(pc++);
-					short s = (short) ((branchbyte1 << 8) | branchbyte2);					
+					short s = (short) (((branchbyte1&0xFF) << 8) | (branchbyte2&0xFF));				
 					StackElement se = operandStack.pop();
 					IntValue value = null;
 					if (se instanceof IntValue){
@@ -387,7 +386,7 @@ public class Frame {
 				case Constants.INSTRUCTION_iflt: {
 					byte branchbyte1 = byteCode.get(pc++);
 					byte branchbyte2 = byteCode.get(pc++);
-					short s = (short) ((branchbyte1 << 8) | branchbyte2);					
+					short s = (short) (((branchbyte1&0xFF) << 8) | (branchbyte2&0xFF));					
 					StackElement se = operandStack.pop();
 					IntValue value = null;
 					if (se instanceof IntValue){
@@ -404,7 +403,7 @@ public class Frame {
 				case Constants.INSTRUCTION_ifne: {
 					byte branchbyte1 = byteCode.get(pc++);
 					byte branchbyte2 = byteCode.get(pc++);
-					short s = (short) ((branchbyte1 << 8) | branchbyte2);					
+					short s = (short) (((branchbyte1&0xFF) << 8) | (branchbyte2&0xFF));				
 					StackElement se = operandStack.pop();
 					IntValue value = null;
 					if (se instanceof IntValue){
@@ -425,7 +424,7 @@ public class Frame {
 				case Constants.INSTRUCTION_ifnull: {
 					byte branchbyte1 = byteCode.get(pc++);
 					byte branchbyte2 = byteCode.get(pc++);
-					short s = (short) ((branchbyte1 << 8) | branchbyte2);					
+					short s = (short) (((branchbyte1&0xFF) << 8) | (branchbyte2&0xFF));					
 					StackElement value = operandStack.pop();
 					if (value instanceof Null){
 						pc = pc-3 + s;
@@ -613,7 +612,6 @@ public class Frame {
     	}
     	
     	log.info(operandStack);
-    	StackElement e = operandStack.pop();
     	
     	return operandStack.pop();
     	
@@ -715,6 +713,7 @@ public class Frame {
 	}
 
 
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private StackElement invokeCoreMethod(String clazzName, String methodName, StackElement[] locals, Stack<StackElement> stack) {
 		log.debug("Invoked core method: " + clazzName + " " + methodName + " " + Arrays.toString(locals) + " " + stack);
 		if (clazzName.equals("java/lang/String")){
@@ -774,6 +773,9 @@ public class Frame {
 				StringBuilder sb = (StringBuilder) ((StringBuilderReference) e).getValue();
 				if (locals[0] instanceof IntValue){
 					sb.append((char) (((IntValue) locals[0]).getIntValue()));
+				}else if (locals[0] instanceof StringReference){
+					StringReference ref = (StringReference) locals[0];
+					sb.append((String) ref.getValue());
 				}else if (locals[0] instanceof Reference){
 					Reference ref = (Reference) locals[0];
 					ConstStringInfo csi = (ConstStringInfo) ref.getValue();
@@ -788,7 +790,9 @@ public class Frame {
 				return new StringReference(sb.toString());
 			}else if (methodName.equals("<init>")){
 				StringBuilder sb = (StringBuilder) ((StringBuilderReference) stack.pop()).getValue();
-				sb.append(((StringReference) locals[0]).getValue());
+				if (locals.length == 1){
+					sb.append(((StringReference) locals[0]).getValue());
+				}
 			}
 		}
 		return null;
@@ -807,12 +811,12 @@ public class Frame {
 	}
 
 
-	@SuppressWarnings("rawtypes")
 	private Reference createNewObject(String clazz){
 		Reference r = createObject(clazz);
 		heap.addToHeap(r);
 		return r;
 	}
+	@SuppressWarnings("rawtypes")
 	private Reference createObject(String clazz){
 		Object o = new Object();
 		if (clazz.equals("java/util/Stack")){
