@@ -12,8 +12,9 @@ public class Sat {
 	 * @param args
 	 * @throws Exception
 	 */
-	public static String main(String[] args) throws Exception {
-		String sat = "abc!d&|&";
+	public static String main(String input) throws Exception {
+		//String sat = "abc!d&|&";
+		String sat = input;
 		Expression e = buildTree(sat);
 		boolean[] solution = solve(e, variableCount(sat));
 		String result = "";
@@ -26,7 +27,6 @@ public class Sat {
 				result += (solution[i] ? '1' : '0');
 			}
 		}
-		
 		return result;
 	}
 

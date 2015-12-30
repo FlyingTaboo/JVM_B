@@ -6,5 +6,7 @@ public class Reference extends StackElement {
 		super(o);
 		// TODO Auto-generated constructor stub
 	}
+	
+	public String mark; 
 
 }

@@ -14,6 +14,7 @@ import cz.cvut.run.classfile.constantpool.ConstFieldRefInfo;
 import cz.cvut.run.classfile.constantpool.ConstMethodRefInfo;
 import cz.cvut.run.classfile.constantpool.ConstNameAndTypeInfo;
 import cz.cvut.run.classfile.constantpool.ConstStringInfo;
+import cz.cvut.run.classfile.constantpool.ConstUtf8Info;
 import cz.cvut.run.constants.Constants;
 import cz.cvut.run.stack.ArrayReference;
 import cz.cvut.run.stack.ByteValue;
@@ -33,7 +34,7 @@ import cz.cvut.run.utils.Utils;
 public class Frame {
     private static final Logger log = Logger.getLogger(Frame.class);
 	private StackElement[] localVariablesArray;
-	private Stack<StackElement> operandStack = new Stack<StackElement>();
+	public Stack<StackElement> operandStack = new Stack<StackElement>();
 	private ArrayList<ConstantPoolElement> constantPool;
 	private ArrayList<Byte> byteCode;
 	private CodeAttribute codeAttribute;
@@ -43,8 +44,9 @@ public class Frame {
 	private int codeIndex = 0;
 	int lineNumberTableIndex;
 	private ClassFile cf;
+	public Frame parent;
 	
-	public Frame(Method m, ClassFile cf, Heap heap, int codeIndex, int lineNumberTableIndex, StackElement[] locals, Stack<StackElement> operandStack) throws Exception {
+	public Frame(Method m, ClassFile cf, Heap heap, int codeIndex, int lineNumberTableIndex, StackElement[] locals, Stack<StackElement> operandStack, Frame parent) throws Exception {
 		this.method = m;
 		byteCode = m.getCode(codeIndex);
 		this.cf = cf;
@@ -60,6 +62,7 @@ public class Frame {
 		if (operandStack != null) {
 			this.operandStack = operandStack;
 		}
+		this.parent = parent;
 	}
 
 
@@ -207,8 +210,7 @@ public class Frame {
 				}
 				case Constants.INSTRUCTION_i2c: {
 					IntValue value = (IntValue) operandStack.pop();
-					IntValue result = new IntValue(value.getIntValue() & 0xFF00);
-					operandStack.push(result);
+					operandStack.push(new CharValue((char) value.getIntValue()));
 					break;
 				}
 				
@@ -558,7 +560,9 @@ public class Frame {
 					
 					if(type==4){
 						boolean[] array = new boolean[((IntValue) countE).getIntValue()];
-						operandStack.push(new ArrayReference(array));
+						ArrayReference ar = new ArrayReference(array);
+						heap.addToHeap(ar);
+						operandStack.push(ar);
 					}
 					break;
 				}
@@ -605,9 +609,12 @@ public class Frame {
 					log.error("Unsupported instruction: " + Utils.getHexa(instruction));
 				}
 			}
+    		heap.runGC(this);
     	}
     	
     	log.info(operandStack);
+    	StackElement e = operandStack.pop();
+    	
     	return operandStack.pop();
     	
     	
@@ -630,12 +637,12 @@ public class Frame {
 		for(int i=0; i<methodAttributesCount; i++){
 			locals[methodAttributesCount-i-1] = operandStack.pop();
 		}
-		log.info("Invoke method: " + methodName + " " + Arrays.toString(locals));
+		log.debug("Invoke method: " + methodName + " " + Arrays.toString(locals));
 		if (isCoreMethod(clazzName)){
 			return invokeCoreMethod(clazzName, methodName, locals, null);
 		}else{
 			Method method = cf.getMethodByName(methodName);
-			Frame f = new Frame(method, this.cf, heap, this.codeIndex, this.lineNumberTableIndex, locals, null);
+			Frame f = new Frame(method, this.cf, heap, this.codeIndex, this.lineNumberTableIndex, locals, null, this);
 			return f.execute();
 		}
 		
@@ -644,14 +651,16 @@ public class Frame {
 
 	private StackElement invokeSpecial(int methodIndex) throws Exception {
 		ConstMethodRefInfo m = (ConstMethodRefInfo) constantPool.get(methodIndex-1);
+		ConstClassInfo clazz = (ConstClassInfo) constantPool.get(m.getClassIndex()-1);
 		
 		int indexName = m.getNameAndTypeIndex()-1;
 		ConstNameAndTypeInfo methodNameType = (ConstNameAndTypeInfo) constantPool.get(indexName);
 		
 		int methodDescIndex = methodNameType.getDescriptorIndex()-1;
 		int methodNameIndex = methodNameType.getNameIndex()-1;
+		String methodName = constantPool.get(methodNameIndex).toString();
+		String clazzName = constantPool.get(clazz.getNameIndex()-1).toString();
 		
-		if (constantPool.get(methodNameIndex).toString().equals("<init>")) return null;
 		int methodAttributesCount =  Utils.getMethodAttributesCount(constantPool.get(methodDescIndex));
 		
 		StackElement[] locals = new StackElement[methodAttributesCount];
@@ -660,10 +669,14 @@ public class Frame {
 		}
 		Stack<StackElement> stack = new Stack<StackElement>();
 		stack.push(operandStack.pop());
-		Method method = cf.getMethodByName(constantPool.get(methodNameIndex).toString());
-		log.info("Invoke method: " + constantPool.get(methodNameIndex).toString());
-		Frame f = new Frame(method, this.cf, heap, this.codeIndex, this.lineNumberTableIndex, locals, stack);
-		return f.execute();
+		if (isCoreMethod(clazzName)){
+			return invokeCoreMethod(clazzName, methodName, locals, stack);
+		}else{
+			if (methodName.equals("<init>")) return null;
+			Method method = cf.getMethodByName(methodName);
+			Frame f = new Frame(method, this.cf, heap, this.codeIndex, this.lineNumberTableIndex, locals, stack, this);
+			return f.execute();
+		}
 	}
 
 
@@ -681,7 +694,7 @@ public class Frame {
 		
 		log.debug(constantPool.get(methodDescIndex) + " " + methodName + " " + constantPool.get(indexName) + " " + clazzName);
 		int methodAttributesCount =  Utils.getMethodAttributesCount(constantPool.get(methodDescIndex));
-		log.info("Invoke method: " + methodName + " " + operandStack);
+		log.debug("Invoke method: " + methodName + " " + operandStack);
 		
 		StackElement[] locals = new StackElement[methodAttributesCount];
 		for(int i=0; i<methodAttributesCount; i++){
@@ -689,12 +702,13 @@ public class Frame {
 		}
 		Stack<StackElement> stack = new Stack<StackElement>();
 		stack.push(operandStack.pop());
-		log.info("Invoke method: " + methodName + " " + Arrays.toString(locals) + " " + stack);
+		log.debug("Invoke method: " + methodName + " " + Arrays.toString(locals) + " " + stack);
 		if (isCoreMethod(clazzName)){
 			return invokeCoreMethod(clazzName, methodName, locals, stack);
 		}else{
+			if (methodName.equals("<init>")) return null;
 			Method method = cf.getMethodByName(methodName);
-			Frame f = new Frame(method, this.cf, heap, this.codeIndex, this.lineNumberTableIndex, locals, stack);
+			Frame f = new Frame(method, this.cf, heap, this.codeIndex, this.lineNumberTableIndex, locals, stack, this);
 			return f.execute();
 		}
 
@@ -702,18 +716,40 @@ public class Frame {
 
 
 	private StackElement invokeCoreMethod(String clazzName, String methodName, StackElement[] locals, Stack<StackElement> stack) {
-		log.info("Invoked core method: " + clazzName + " " + methodName + " " + Arrays.toString(locals) + " " + stack);
+		log.debug("Invoked core method: " + clazzName + " " + methodName + " " + Arrays.toString(locals) + " " + stack);
 		if (clazzName.equals("java/lang/String")){
 			if (methodName.equals("charAt")){
-				ConstStringInfo csi = (ConstStringInfo) stack.get(0).getValue();
-				String value = constantPool.get(csi.getStringIndex()-1).toString(); 
-				return new CharValue(new Character(value.charAt(((IntValue) locals[0]).getIntValue())));
+				if (stack.get(0).getValue() instanceof ConstStringInfo){
+					ConstStringInfo csi = (ConstStringInfo) stack.get(0).getValue();
+					String value = constantPool.get(csi.getStringIndex()-1).toString(); 
+					return new CharValue(new Character(value.charAt(((IntValue) locals[0]).getIntValue())));
+				}else if (stack.get(0) instanceof StringReference){
+					StringReference sr = (StringReference) stack.get(0);
+					String value = (String) sr.getValue();
+					return new CharValue(new Character(value.charAt(((IntValue) locals[0]).getIntValue())));
+				}
 			}else if (methodName.equals("length")){
-				ConstStringInfo csi = (ConstStringInfo) stack.get(0).getValue();
-				String value = constantPool.get(csi.getStringIndex()-1).toString(); 
-				return new IntValue(value.length());
+				if (stack.get(0).getValue() instanceof ConstStringInfo){
+					ConstStringInfo csi = (ConstStringInfo) stack.get(0).getValue();
+					String value = constantPool.get(csi.getStringIndex()-1).toString(); 
+					return new IntValue(value.length());
+				}else if (stack.get(0) instanceof StringReference){
+					StringReference sr = (StringReference) stack.get(0);
+					String value = (String) sr.getValue();
+					return new IntValue(value.length());
+				}
+				
 			}else if (methodName.equals("valueOf")){
-				//TODO
+				//if (locals[0].getValue() instanceof ConstStringInfo){
+				if(locals[0] instanceof StringReference){
+					return new StringReference(locals[0].getValue());
+				}
+				ConstStringInfo csi = (ConstStringInfo) locals[0].getValue();
+				if (constantPool.get(csi.getStringIndex()-1) instanceof ConstUtf8Info){
+					ConstUtf8Info utf = (ConstUtf8Info) constantPool.get(csi.getStringIndex()-1);
+					return new StringReference(utf.toString());
+				}
+				
 			}
 		}else if(clazzName.equals("java/util/Stack")){
 			if(methodName.equals("pop")){
@@ -734,9 +770,25 @@ public class Frame {
 			}
 		}else if(clazzName.equals("java/lang/StringBuilder")){
 			if (methodName.equals("append")){
-				//TODO
+				StackElement e = stack.pop();
+				StringBuilder sb = (StringBuilder) ((StringBuilderReference) e).getValue();
+				if (locals[0] instanceof IntValue){
+					sb.append((char) (((IntValue) locals[0]).getIntValue()));
+				}else if (locals[0] instanceof Reference){
+					Reference ref = (Reference) locals[0];
+					ConstStringInfo csi = (ConstStringInfo) ref.getValue();
+					sb.append(constantPool.get(csi.getStringIndex()-1));
+				}else if (locals[0] instanceof CharValue){
+					sb.append(((CharValue) locals[0]).getValue());
+				}
+				return e;
 			}else if (methodName.equals("toString")){
-				//TODO
+				StackElement e = stack.pop();
+				StringBuilder sb = (StringBuilder) ((StringBuilderReference) e).getValue();
+				return new StringReference(sb.toString());
+			}else if (methodName.equals("<init>")){
+				StringBuilder sb = (StringBuilder) ((StringBuilderReference) stack.pop()).getValue();
+				sb.append(((StringReference) locals[0]).getValue());
 			}
 		}
 		return null;
@@ -757,6 +809,11 @@ public class Frame {
 
 	@SuppressWarnings("rawtypes")
 	private Reference createNewObject(String clazz){
+		Reference r = createObject(clazz);
+		heap.addToHeap(r);
+		return r;
+	}
+	private Reference createObject(String clazz){
 		Object o = new Object();
 		if (clazz.equals("java/util/Stack")){
 			return new StackReference(new Stack());
@@ -771,6 +828,7 @@ public class Frame {
 		}
 		return new ObjectReference(o);
 	}
+
 }
 
 
