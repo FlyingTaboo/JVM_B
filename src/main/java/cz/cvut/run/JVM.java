@@ -29,10 +29,14 @@ public class JVM {
     	}
     }
 
-	public static String runJVM(String pathClass, String input) throws Exception{
+	public static String runJVM(ArrayList<String> pathClasses, String input) throws Exception{
     	String result = "";
     	log.debug("=============== START of JVM  ==============");
-        classes.add(new ClassLoader(new File(pathClass)));
+    	classes.clear();
+    	for(int i=0; i<pathClasses.size();i++){
+    		classes.add(new ClassLoader(new File(pathClasses.get(i))));
+    	}
+        
         ClassFile cf = classes.get(0).getClassFile();
         int codeIndex = cf.getCodeIndex();
         int lineNumberTableIndex = cf.getLineNumberTableIndex();
@@ -40,7 +44,7 @@ public class JVM {
     	Heap heap = new Heap();
 
     	
-    	Frame main = new Frame(mainMethod, cf, heap, codeIndex, lineNumberTableIndex, new StackElement[] {new StringReference(input)}, null, null);
+    	Frame main = new Frame(mainMethod, cf, classes, heap, codeIndex, lineNumberTableIndex, new StackElement[] {new StringReference(input)}, null, null);
         StackElement e = main.execute();
         if (e instanceof StringReference){
     		StringReference s = (StringReference) e;
@@ -58,7 +62,9 @@ public class JVM {
     	try {
     	    String input = br.readLine();
     	    String path = br.readLine();
-    	    appendToOutputFile(runJVM(path, input));
+    	    ArrayList<String> paths = new ArrayList<String>();
+    	    paths.add(path);
+    	    appendToOutputFile(runJVM(paths, input));
     	} finally {
     	    br.close();
     	}
@@ -67,8 +73,9 @@ public class JVM {
     
     private static void appendToOutputFile(String input){
     	String delimiter = "========================================\n";
-    	try(PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("OUTPUTFILE", true)))) {
-    	    out.println(new Date());
+    	try {
+    		PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("OUTPUTFILE", true)));
+    		out.println(new Date());
     		out.println(input);
     	    out.println(delimiter);
     	}catch (IOException e) {

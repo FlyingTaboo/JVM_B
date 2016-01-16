@@ -45,8 +45,9 @@ public class Frame {
 	int lineNumberTableIndex;
 	private ClassFile cf;
 	public Frame parent;
+	ArrayList<ClassLoader> classes;
 	
-	public Frame(Method m, ClassFile cf, Heap heap, int codeIndex, int lineNumberTableIndex, StackElement[] locals, Stack<StackElement> operandStack, Frame parent) throws Exception {
+	public Frame(Method m, ClassFile cf, ArrayList<ClassLoader> classes, Heap heap, int codeIndex, int lineNumberTableIndex, StackElement[] locals, Stack<StackElement> operandStack, Frame parent) throws Exception {
 		this.method = m;
 		byteCode = m.getCode(codeIndex);
 		this.cf = cf;
@@ -63,6 +64,7 @@ public class Frame {
 			this.operandStack = operandStack;
 		}
 		this.parent = parent;
+		this.classes = classes;
 	}
 
 
@@ -629,7 +631,7 @@ public class Frame {
 		int methodNameIndex = methodNameType.getNameIndex()-1;
 		String methodName = constantPool.get(methodNameIndex).toString();
 		String clazzName = constantPool.get(clazz.getNameIndex()-1).toString();
-		
+		log.debug("Invoke class: " + clazzName + ", " + methodName);
 		int methodAttributesCount =  Utils.getMethodAttributesCount(constantPool.get(methodDescIndex));
 		StackElement[] locals = new StackElement[methodAttributesCount];
 		for(int i=0; i<methodAttributesCount; i++){
@@ -639,8 +641,8 @@ public class Frame {
 		if (isCoreMethod(clazzName)){
 			return invokeCoreMethod(clazzName, methodName, locals, null);
 		}else{
-			Method method = cf.getMethodByName(methodName);
-			Frame f = new Frame(method, this.cf, heap, this.codeIndex, this.lineNumberTableIndex, locals, null, this);
+			Method method = cf.getMethodByName(methodName);//FIXME
+			Frame f = new Frame(method, this.cf, this.classes, heap, this.codeIndex, this.lineNumberTableIndex, locals, null, this);
 			return f.execute();
 		}
 		
@@ -671,8 +673,8 @@ public class Frame {
 			return invokeCoreMethod(clazzName, methodName, locals, stack);
 		}else{
 			if (methodName.equals("<init>")) return null;
-			Method method = cf.getMethodByName(methodName);
-			Frame f = new Frame(method, this.cf, heap, this.codeIndex, this.lineNumberTableIndex, locals, stack, this);
+			Method method = cf.getMethodByName(methodName); //FIXME
+			Frame f = new Frame(method, this.cf, this.classes, heap, this.codeIndex, this.lineNumberTableIndex, locals, stack, this);
 			return f.execute();
 		}
 	}
@@ -689,7 +691,7 @@ public class Frame {
 		int methodNameIndex = methodNameType.getNameIndex()-1;
 		String methodName = constantPool.get(methodNameIndex).toString();
 		String clazzName = constantPool.get(clazz.getNameIndex()-1).toString();
-		
+		log.debug("Invoke class: " + clazzName + ", " + methodName);
 		log.debug(constantPool.get(methodDescIndex) + " " + methodName + " " + constantPool.get(indexName) + " " + clazzName);
 		int methodAttributesCount =  Utils.getMethodAttributesCount(constantPool.get(methodDescIndex));
 		log.debug("Invoke method: " + methodName + " " + operandStack);
@@ -705,8 +707,9 @@ public class Frame {
 			return invokeCoreMethod(clazzName, methodName, locals, stack);
 		}else{
 			if (methodName.equals("<init>")) return null;
+			ClassFile cf = Utils.getClassFileByName(clazzName, this.classes);
 			Method method = cf.getMethodByName(methodName);
-			Frame f = new Frame(method, this.cf, heap, this.codeIndex, this.lineNumberTableIndex, locals, stack, this);
+			Frame f = new Frame(method, cf, this.classes, heap, this.codeIndex, this.lineNumberTableIndex, locals, stack, this);
 			return f.execute();
 		}
 
@@ -794,6 +797,12 @@ public class Frame {
 					sb.append(((StringReference) locals[0]).getValue());
 				}
 			}
+			
+		}else if(clazzName.equals("java/io/PrintStream")){
+			if (methodName.equals("println")){
+				StackElement e = stack.pop();
+				System.out.println("------------------------------ " +e);
+			}
 		}
 		return null;
 	}
@@ -804,7 +813,8 @@ public class Frame {
 				clazz.equals("java/lang/StringBuilder") || 
 				clazz.equals("java/lang/Exception") || 
 				clazz.equals("java/lang/String") || 
-				clazz.equals("java/lang/Character")){
+				clazz.equals("java/lang/Character")|| 
+				clazz.equals("java/io/PrintStream")){
 			return true;
 		}
 		return false;

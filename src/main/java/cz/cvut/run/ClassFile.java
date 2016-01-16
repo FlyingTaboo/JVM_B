@@ -9,8 +9,10 @@ import cz.cvut.run.classfile.ConstantPoolElement;
 import cz.cvut.run.classfile.Field;
 import cz.cvut.run.classfile.Interface;
 import cz.cvut.run.classfile.Method;
+import cz.cvut.run.classfile.constantpool.ConstClassInfo;
 import cz.cvut.run.classfile.constantpool.ConstUtf8Info;
 import cz.cvut.run.constants.Constants;
+import cz.cvut.run.utils.Utils;
 
 public class ClassFile {
 	private static final Logger log = Logger.getLogger(ClassFile.class);
@@ -172,6 +174,11 @@ public class ClassFile {
 		}
 		log.error("Not found method " + name + " in class file!");
 		throw new Exception("Not found method " + name + " in class file!");
+	}
+	public String getName() {
+		ConstClassInfo cci = (ConstClassInfo) this.constantPool.get(Utils.parseByteToInt(this.getThisClass())-1);
+		String name = this.constantPool.get(cci.getNameIndex()-1).toString();
+		return name;
 	}
 	
 }

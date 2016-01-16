@@ -3,6 +3,8 @@ package cz.cvut.run.utils;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 
+import cz.cvut.run.ClassFile;
+import cz.cvut.run.ClassLoader;
 import cz.cvut.run.classfile.ConstantPoolElement;
 import cz.cvut.run.constants.Constants;
 
@@ -88,6 +90,17 @@ public class Utils {
 			return attrs.length;
 		}
 		
+	}
+
+	public static ClassFile getClassFileByName(String clazzName, ArrayList<ClassLoader> classes) {
+		for(int i=0; i<classes.size(); i++){
+			ClassLoader cl = classes.get(i);
+			ClassFile cf = cl.getClassFile();
+			if (cf.getName().equals(clazzName)){
+				return cf;
+			}
+		}
+		return null;
 	}
 
 	
