@@ -615,8 +615,11 @@ public class Frame {
     	}
     	
     	log.info(operandStack);
-    	
-    	return operandStack.pop();
+    	if (!operandStack.empty()){
+    		return operandStack.pop();
+    	}else{
+    		return null;
+    	}
     	
     	
     }
@@ -640,9 +643,9 @@ public class Frame {
 		}
 		log.debug("Invoke method: " + methodName + " " + Arrays.toString(locals));
 		if (isCoreMethod(clazzName)){
-			return invokeCoreMethod(clazzName, methodName, locals, null);
+			return Core.invokeCoreMethod(clazzName, methodName, locals, null, constantPool);
 		}else{
-			Method method = cf.getMethodByName(methodName);//FIXME
+			Method method = cf.getMethodByName(methodName);
 			Frame f = new Frame(method, this.cf, this.classes, heap, this.codeIndex, this.lineNumberTableIndex, locals, null, this);
 			return f.execute();
 		}
@@ -670,10 +673,11 @@ public class Frame {
 		}
 		Stack<StackElement> stack = new Stack<StackElement>();
 		StackElement e = operandStack.pop();
-		stack.push(e);
 		locals[0] = e;
+		
 		if (isCoreMethod(clazzName)){
-			return invokeCoreMethod(clazzName, methodName, locals, stack);
+			StackElement e1 = Core.invokeCoreMethod(clazzName, methodName, locals, stack, constantPool);
+			return e1;
 		}else{
 			if (methodName.equals("<init>")) return null;
 			ClassFile cf = Utils.getSuperClassFile(e, classes);
@@ -710,9 +714,8 @@ public class Frame {
 		locals[0] = e;
 		log.debug("Invoke method: " + methodName + " " + Arrays.toString(locals) + " " + stack);
 		if (isCoreMethod(clazzName)){
-			return invokeCoreMethod(clazzName, methodName, locals, stack);
+			return Core.invokeCoreMethod(clazzName, methodName, locals, stack, constantPool);
 		}else{
-			if (methodName.equals("<init>")) return null;
 			ClassFile cf = Utils.getClassFileByClassAndMethodName(clazzName, this.classes, methodName, e);
 			Method method = cf.getMethodByName(methodName);
 			Frame f = new Frame(method, cf, this.classes, heap, this.codeIndex, this.lineNumberTableIndex, locals, stack, this);
@@ -722,109 +725,18 @@ public class Frame {
 	}
 
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private StackElement invokeCoreMethod(String clazzName, String methodName, StackElement[] locals, Stack<StackElement> stack) {
-		log.debug("Invoked core method: " + clazzName + " " + methodName + " " + Arrays.toString(locals) + " " + stack);
-		if (clazzName.equals("java/lang/String")){
-			if (methodName.equals("charAt")){
-				if (stack.get(0).getValue() instanceof ConstStringInfo){
-					ConstStringInfo csi = (ConstStringInfo) stack.get(0).getValue();
-					String value = constantPool.get(csi.getStringIndex()-1).toString(); 
-					return new CharValue(new Character(value.charAt(((IntValue) locals[locals.length-1]).getIntValue())));
-				}else if (stack.get(0) instanceof StringReference){
-					StringReference sr = (StringReference) stack.get(0);
-					String value = (String) sr.getValue();
-					return new CharValue(new Character(value.charAt(((IntValue) locals[locals.length-1]).getIntValue())));
-				}
-			}else if (methodName.equals("length")){
-				if (stack.get(0).getValue() instanceof ConstStringInfo){
-					ConstStringInfo csi = (ConstStringInfo) stack.get(0).getValue();
-					String value = constantPool.get(csi.getStringIndex()-1).toString(); 
-					return new IntValue(value.length());
-				}else if (stack.get(0) instanceof StringReference){
-					StringReference sr = (StringReference) stack.get(0);
-					String value = (String) sr.getValue();
-					return new IntValue(value.length());
-				}
-				
-			}else if (methodName.equals("valueOf")){
-				if(locals[locals.length-1] instanceof StringReference){
-					return new StringReference(locals[locals.length-1].getValue());
-				}
-				ConstStringInfo csi = (ConstStringInfo) locals[locals.length-1].getValue();
-				if (constantPool.get(csi.getStringIndex()-1) instanceof ConstUtf8Info){
-					ConstUtf8Info utf = (ConstUtf8Info) constantPool.get(csi.getStringIndex()-1);
-					return new StringReference(utf.toString());
-				}
-				
-			}
-		}else if(clazzName.equals("java/util/Stack")){
-			if(methodName.equals("pop")){
-				StackReference sr = (StackReference) stack.get(0);
-				Stack srStack = (Stack) sr.getValue();
-				return (StackElement) srStack.pop();
-			}else if (methodName.equals("push")){
-				StackReference sr = (StackReference) stack.get(0);
-				Stack srStack = (Stack) sr.getValue();
-				srStack.push(locals[locals.length-1]);
-				return locals[locals.length-1];
-			}
-		}else if(clazzName.equals("java/lang/Character")){
-			if (methodName.equals("isLetter")){
-				CharValue c = (CharValue) locals[locals.length-1];
-				Character cc = (Character) c.getValue();
-				return new ByteValue(Character.isLetter(cc.charValue()));
-			}
-		}else if(clazzName.equals("java/lang/StringBuilder")){
-			if (methodName.equals("append")){
-				StackElement e = stack.pop();
-				StringBuilder sb = (StringBuilder) ((StringBuilderReference) e).getValue();
-				if (locals[locals.length-1] instanceof IntValue){
-					sb.append((char) (((IntValue) locals[locals.length-1]).getIntValue()));
-				}else if (locals[locals.length-1] instanceof StringReference){
-					StringReference ref = (StringReference) locals[locals.length-1];
-					sb.append((String) ref.getValue());
-				}else if (locals[locals.length-1] instanceof Reference){
-					Reference ref = (Reference) locals[locals.length-1];
-					ConstStringInfo csi = (ConstStringInfo) ref.getValue();
-					sb.append(constantPool.get(csi.getStringIndex()-1));
-				}else if (locals[1] instanceof CharValue){
-					sb.append(((CharValue) locals[locals.length-1]).getValue());
-				}
-				return e;
-			}else if (methodName.equals("toString")){
-				StackElement e = stack.pop();
-				StringBuilder sb = (StringBuilder) ((StringBuilderReference) e).getValue();
-				return new StringReference(sb.toString());
-			}else if (methodName.equals("<init>")){
-				StringBuilder sb = (StringBuilder) ((StringBuilderReference) stack.pop()).getValue();
-				if (locals.length == 1){
-					sb.append(((StringReference) locals[locals.length-1]).getValue());
-				}
-			}
-			
-		}else if(clazzName.equals("java/io/PrintStream")){
-			if (methodName.equals("println")){
-				StackElement e = stack.pop();
-				ConstStringInfo csi = (ConstStringInfo) locals[1].getValue();
-				if (constantPool.get(csi.getStringIndex()-1) instanceof ConstUtf8Info){
-					ConstUtf8Info utf = (ConstUtf8Info) constantPool.get(csi.getStringIndex()-1);
-					log.warn("PROGRAM PRINTED: " + utf.toString());
-				}
-			}
-		}
-		return null;
-	}
+	
 
 
 	private boolean isCoreMethod(String clazz) {
+		System.out.println(clazz);
 		if (clazz.equals("java/util/Stack") || 
 				clazz.equals("java/lang/StringBuilder") || 
 				clazz.equals("java/lang/Exception") || 
 				clazz.equals("java/lang/String") || 
 				clazz.equals("java/lang/Character")|| 
 				clazz.equals("java/io/PrintStream")){
-			return true;
+			return false;
 		}
 		return false;
 	}

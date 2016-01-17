@@ -50,7 +50,7 @@ public class JVM {
     		StringReference s = (StringReference) e;
     		result = s.getValue().toString();
     	}
-        
+        log.info(result);
         log.debug("================ END of JVM ================");
         return result;
     }
@@ -64,6 +64,20 @@ public class JVM {
     	    String path = br.readLine();
     	    ArrayList<String> paths = new ArrayList<String>();
     	    paths.add(path);
+    	    paths.add(".\\target\\test-classes\\fit\\cvut\\run\\test\\Exception.class");
+    	    paths.add(".\\target\\test-classes\\fit\\cvut\\run\\test\\Character.class");
+    	    paths.add(".\\target\\test-classes\\fit\\cvut\\run\\test\\PrintStream.class");
+    	    paths.add(".\\target\\test-classes\\fit\\cvut\\run\\test\\Stack.class");
+    	    paths.add(".\\target\\test-classes\\fit\\cvut\\run\\test\\String$1.class");
+    	    paths.add(".\\target\\test-classes\\fit\\cvut\\run\\test\\String.class");
+    	    paths.add(".\\target\\test-classes\\fit\\cvut\\run\\test\\StringBuilder.class");
+    	    try{
+    	    	String path1 = br.readLine();
+    	    	paths.add(path1);
+    	    	String path2 = br.readLine();
+    	    	paths.add(path2);
+    	    }catch (Exception e){}
+    	    
     	    appendToOutputFile(runJVM(paths, input));
     	} finally {
     	    br.close();

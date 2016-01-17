@@ -1,7 +1,11 @@
 package fit.cvut.run.test;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.util.ArrayList;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import cz.cvut.run.JVM;
@@ -20,6 +24,21 @@ public class ApplicationTest {
 	private static final String testClassFile = DELIMITER + "test.class";
 	private static final String AClassFile = DELIMITER + "A.class";
 	private static final String BClassFile = DELIMITER + "B.class";
+	
+	private final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
+	private final ByteArrayOutputStream errContent = new ByteArrayOutputStream();
+
+	@Before
+	public void setUpStreams() {
+	    System.setOut(new PrintStream(outContent));
+	    System.setErr(new PrintStream(errContent));
+	}
+
+	@After
+	public void cleanUpStreams() {
+	    System.setOut(null);
+	    System.setErr(null);
+	}
 	
     @Test
     public void testMain() throws Exception { 
@@ -71,11 +90,12 @@ public class ApplicationTest {
     @Test
     public void testFuckingClasses() throws Exception{ 
     	ArrayList<String> paths = new ArrayList<String>();
-    	paths.add(new java.io.File( "." ).getCanonicalPath()+TEST_CLASSES_PATH + testClassFile);
-    	paths.add(new java.io.File( "." ).getCanonicalPath()+TEST_CLASSES_PATH + BClassFile);
-    	paths.add(new java.io.File( "." ).getCanonicalPath()+TEST_CLASSES_PATH + AClassFile);
+    	String filePath = new java.io.File( "." ).getCanonicalPath()+TEST_CLASSES_PATH;
+		paths.add(filePath + testClassFile);
+    	paths.add(filePath + BClassFile);
+    	paths.add(filePath + AClassFile);
     	JVM.runJVM(paths, null);
-    	//Assert.assertEquals(result, "abcdef\n111100");
+    	Assert.assertEquals(outContent.toString(), "foo\r\nbar2\r\n");
     }
     @Test
     public void testParseByteToInt(){
