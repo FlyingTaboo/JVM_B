@@ -181,4 +181,10 @@ public class ClassFile {
 		return name;
 	}
 	
+	public String getSuperName(){
+		ConstClassInfo cci = (ConstClassInfo) this.constantPool.get(this.getSuperClass()-1);
+		String name = this.constantPool.get(cci.getNameIndex()-1).toString();
+		return name;
+	}
+	
 }

@@ -36,7 +36,7 @@ public class CodeAttribute extends Attribute {
 		for(int i=0; i<codeLength; i++){
 			code.add(i, attributeInfo[i+8]);
 		}
-		log.debug(Utils.getHexa(code));
+		log.trace(Utils.getHexa(code));
 		exceptionTableLength = Utils.parseByteToInt(new byte[]{attributeInfo[codeLength+8], attributeInfo[codeLength+9]});
 		
 		int p = codeLength+10;

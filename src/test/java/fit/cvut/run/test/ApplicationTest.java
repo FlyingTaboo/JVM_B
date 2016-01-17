@@ -21,27 +21,27 @@ public class ApplicationTest {
 	private static final String AClassFile = DELIMITER + "A.class";
 	private static final String BClassFile = DELIMITER + "B.class";
 	
-    //@Test
+    @Test
     public void testMain() throws Exception { 
         JVM.main(null);
     }
     
-    //@Test(expected=java.lang.Exception.class)
+    @Test(expected=java.lang.Exception.class)
     public void testDirectory() throws Exception{ 
     	JVM.main(new String[] {new java.io.File( "." ).getCanonicalPath()+TEST_CLASSES_PATH});
     }
     
-    //@Test(expected=java.lang.Exception.class)
+    @Test(expected=java.lang.Exception.class)
     public void testWrongPath() throws Exception{ 
     	JVM.main(new String[] {"wrong path"});
     }
     
-    //@Test(expected=java.lang.Exception.class)
+    @Test(expected=java.lang.Exception.class)
     public void testSimpleRightPathBadFile() throws Exception{ 
     	JVM.main(new String[] {new java.io.File( "." ).getCanonicalPath()+ TestWrongFile});
     }
 	
-    //@Test
+    @Test
     public void testSatRightPath1() throws Exception{
     	String input = new String("abc&&");
     	ArrayList<String> paths = new ArrayList<String>();
@@ -50,7 +50,7 @@ public class ApplicationTest {
     	Assert.assertEquals(result, "abc\n111");
     }
    
-    //@Test
+    @Test
     public void testSatRightPath2() throws Exception{
     	String input = new String("abc!d&|&");
     	ArrayList<String> paths = new ArrayList<String>();
@@ -59,7 +59,7 @@ public class ApplicationTest {
     	Assert.assertEquals(result, "abcd\n1100");
     }
     
-    //@Test
+    @Test
     public void testSatRightPath3() throws Exception{ 
     	String input = new String("abcdef&|&&&");
     	ArrayList<String> paths = new ArrayList<String>();
@@ -74,10 +74,10 @@ public class ApplicationTest {
     	paths.add(new java.io.File( "." ).getCanonicalPath()+TEST_CLASSES_PATH + testClassFile);
     	paths.add(new java.io.File( "." ).getCanonicalPath()+TEST_CLASSES_PATH + BClassFile);
     	paths.add(new java.io.File( "." ).getCanonicalPath()+TEST_CLASSES_PATH + AClassFile);
-    	String result = JVM.runJVM(paths, null);
+    	JVM.runJVM(paths, null);
     	//Assert.assertEquals(result, "abcdef\n111100");
     }
-    //@Test
+    @Test
     public void testParseByteToInt(){
     	Assert.assertEquals(12345, Utils.parseByteToInt(new byte[] {48,57}));
     	Assert.assertEquals(1234512345, Utils.parseByteToInt(new byte[] {73,-107,41,-39}));

@@ -7,6 +7,8 @@ import cz.cvut.run.ClassFile;
 import cz.cvut.run.ClassLoader;
 import cz.cvut.run.classfile.ConstantPoolElement;
 import cz.cvut.run.constants.Constants;
+import cz.cvut.run.stack.ObjectReference;
+import cz.cvut.run.stack.StackElement;
 
 public class Utils {
 
@@ -92,11 +94,46 @@ public class Utils {
 		
 	}
 
-	public static ClassFile getClassFileByName(String clazzName, ArrayList<ClassLoader> classes) {
+	public static ClassFile getSuperClassFile(StackElement e, ArrayList<ClassLoader> classes){
+		ObjectReference ref = (ObjectReference) e;
+		String refClassName = ref.getClassName();
+		
+		ClassFile refClassFile = getClassFileByClassName(refClassName, classes);
+		return getClassFileByClassName(refClassFile.getSuperName(), classes);
+	}
+	
+	public static ClassFile getClassFileByClassAndMethodName(String clazzName, ArrayList<ClassLoader> classes, String methodName, StackElement e) {
+		ObjectReference ref = (ObjectReference) e;
+		String refClassName = ref.getClassName();
+		
+		ClassFile refClassFile = getClassFileByClassName(refClassName, classes);
+		if(isOverrideMethod(refClassFile, methodName)){
+			return refClassFile;
+		}
 		for(int i=0; i<classes.size(); i++){
 			ClassLoader cl = classes.get(i);
 			ClassFile cf = cl.getClassFile();
 			if (cf.getName().equals(clazzName)){
+				return cf;
+			}
+		}
+		return null;
+	}
+	
+	private static boolean isOverrideMethod(ClassFile classFile, String methodName) {
+		try{
+			classFile.getMethodByName(methodName);
+		}catch(Exception e){
+			return false;
+		}
+		return true;
+	}
+
+	public static ClassFile getClassFileByClassName(String className, ArrayList<ClassLoader> classes){
+		for(int i=0; i<classes.size(); i++){
+			ClassLoader cl = classes.get(i);
+			ClassFile cf = cl.getClassFile();
+			if (cf.getName().equals(className)){
 				return cf;
 			}
 		}
