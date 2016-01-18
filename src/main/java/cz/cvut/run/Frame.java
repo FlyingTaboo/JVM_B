@@ -42,26 +42,22 @@ public class Frame {
 	private Method method;
 	private Heap heap;
 	private int codeIndex = 0;
-	int lineNumberTableIndex;
 	private ClassFile cf;
 	public Frame parent;
 	ArrayList<ClassLoader> classes;
 	
-	public Frame(Method m, ClassFile cf, ArrayList<ClassLoader> classes, Heap heap, int codeIndex, int lineNumberTableIndex, StackElement[] locals, Stack<StackElement> operandStack, Frame parent) throws Exception {
+	public Frame(Method m, ClassFile cf, ArrayList<ClassLoader> classes, Heap heap, StackElement[] locals, Frame parent) throws Exception {
 		this.method = m;
+		codeIndex = cf.getCodeIndex();
+		cf.getLineNumberTableIndex();
 		byteCode = m.getCode(codeIndex);
 		this.cf = cf;
 		this.constantPool = cf.getConstantPool();
 		this.heap = heap;
-		this.codeIndex = codeIndex;
-		this.lineNumberTableIndex = lineNumberTableIndex;
 		this.codeAttribute = m.getCodeAttribute(codeIndex);
 		localVariablesArray = new StackElement[codeAttribute.getMaxLocals()];
 		for (int i=0; locals!=null && i<locals.length; i++){
 			localVariablesArray[i] = locals[i];
-		}
-		if (operandStack != null) {
-			this.operandStack = operandStack;
 		}
 		this.parent = parent;
 		this.classes = classes;
@@ -643,10 +639,10 @@ public class Frame {
 		}
 		log.debug("Invoke method: " + methodName + " " + Arrays.toString(locals));
 		if (isCoreMethod(clazzName)){
-			return Core.invokeCoreMethod(clazzName, methodName, locals, null, constantPool);
+			return Core.invokeCoreMethod(clazzName, methodName, locals, constantPool);
 		}else{
 			Method method = cf.getMethodByName(methodName);
-			Frame f = new Frame(method, this.cf, this.classes, heap, this.codeIndex, this.lineNumberTableIndex, locals, null, this);
+			Frame f = new Frame(method, this.cf, this.classes, heap, locals, this);
 			return f.execute();
 		}
 		
@@ -671,18 +667,17 @@ public class Frame {
 		for(int i=0; i<methodAttributesCount; i++){
 			locals[methodAttributesCount-i] = operandStack.pop();
 		}
-		Stack<StackElement> stack = new Stack<StackElement>();
 		StackElement e = operandStack.pop();
 		locals[0] = e;
 		
 		if (isCoreMethod(clazzName)){
-			StackElement e1 = Core.invokeCoreMethod(clazzName, methodName, locals, stack, constantPool);
+			StackElement e1 = Core.invokeCoreMethod(clazzName, methodName, locals, constantPool);
 			return e1;
 		}else{
 			if (methodName.equals("<init>")) return null;
 			ClassFile cf = Utils.getSuperClassFile(e, classes);
 			Method method = cf.getMethodByName(methodName);
-			Frame f = new Frame(method, cf, this.classes, heap, this.codeIndex, this.lineNumberTableIndex, locals, stack, this);
+			Frame f = new Frame(method, cf, this.classes, heap, locals, this);
 			return f.execute();
 		}
 	}
@@ -708,17 +703,14 @@ public class Frame {
 		for(int i=0; i<methodAttributesCount; i++){
 			locals[methodAttributesCount-i] = operandStack.pop();
 		}
-		Stack<StackElement> stack = new Stack<StackElement>();
 		StackElement e = operandStack.pop();
-		stack.push(e);
 		locals[0] = e;
-		log.debug("Invoke method: " + methodName + " " + Arrays.toString(locals) + " " + stack);
 		if (isCoreMethod(clazzName)){
-			return Core.invokeCoreMethod(clazzName, methodName, locals, stack, constantPool);
+			return Core.invokeCoreMethod(clazzName, methodName, locals, constantPool);
 		}else{
 			ClassFile cf = Utils.getClassFileByClassAndMethodName(clazzName, this.classes, methodName, e);
 			Method method = cf.getMethodByName(methodName);
-			Frame f = new Frame(method, cf, this.classes, heap, this.codeIndex, this.lineNumberTableIndex, locals, stack, this);
+			Frame f = new Frame(method, cf, this.classes, heap, locals, this);
 			return f.execute();
 		}
 

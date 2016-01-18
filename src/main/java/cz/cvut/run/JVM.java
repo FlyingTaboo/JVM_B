@@ -44,7 +44,7 @@ public class JVM {
     	Heap heap = new Heap();
 
     	
-    	Frame main = new Frame(mainMethod, cf, classes, heap, codeIndex, lineNumberTableIndex, new StackElement[] {new StringReference(input)}, null, null);
+    	Frame main = new Frame(mainMethod, cf, classes, heap, new StackElement[] {new StringReference(input)}, null);
         StackElement e = main.execute();
         if (e instanceof StringReference){
     		StringReference s = (StringReference) e;

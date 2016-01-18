@@ -88,7 +88,7 @@ public class ApplicationTest {
     }
     
     @Test
-    public void testFuckingClasses() throws Exception{ 
+    public void testClasses() throws Exception{ 
     	ArrayList<String> paths = new ArrayList<String>();
     	String filePath = new java.io.File( "." ).getCanonicalPath()+TEST_CLASSES_PATH;
 		paths.add(filePath + testClassFile);
