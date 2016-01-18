@@ -729,14 +729,19 @@ public class Frame {
 
 
 	private boolean isCoreMethod(String clazz) {
-		System.out.println(clazz);
+		/*for(int i=0; i<this.classes.size(); i++){
+			if (classes.get(i).getClassFile().getName().equals(clazz)){
+				return true;
+			}
+		}
+		return false;*/
 		if (clazz.equals("java/util/Stack") || 
 				clazz.equals("java/lang/StringBuilder") || 
 				clazz.equals("java/lang/Exception") || 
 				clazz.equals("java/lang/String") || 
 				clazz.equals("java/lang/Character")|| 
 				clazz.equals("java/io/PrintStream")){
-			return false;
+			return true;
 		}
 		return false;
 	}

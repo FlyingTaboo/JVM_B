@@ -64,13 +64,6 @@ public class JVM {
     	    String path = br.readLine();
     	    ArrayList<String> paths = new ArrayList<String>();
     	    paths.add(path);
-    	    paths.add(".\\target\\test-classes\\fit\\cvut\\run\\test\\Exception.class");
-    	    paths.add(".\\target\\test-classes\\fit\\cvut\\run\\test\\Character.class");
-    	    paths.add(".\\target\\test-classes\\fit\\cvut\\run\\test\\PrintStream.class");
-    	    paths.add(".\\target\\test-classes\\fit\\cvut\\run\\test\\Stack.class");
-    	    paths.add(".\\target\\test-classes\\fit\\cvut\\run\\test\\String$1.class");
-    	    paths.add(".\\target\\test-classes\\fit\\cvut\\run\\test\\String.class");
-    	    paths.add(".\\target\\test-classes\\fit\\cvut\\run\\test\\StringBuilder.class");
     	    try{
     	    	String path1 = br.readLine();
     	    	paths.add(path1);
