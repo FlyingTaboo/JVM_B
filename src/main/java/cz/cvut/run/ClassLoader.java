@@ -9,7 +9,9 @@ import org.apache.log4j.Logger;
 import cz.cvut.run.attributes.SourceFileAttribute;
 import cz.cvut.run.attributes.CodeAttribute;
 import cz.cvut.run.attributes.ExceptionsAttribute;
+import cz.cvut.run.attributes.SignatureAttribute;
 import cz.cvut.run.attributes.ConstantValueAttribute;
+import cz.cvut.run.attributes.DeprecatedAttribute;
 import cz.cvut.run.classfile.Attribute;
 import cz.cvut.run.classfile.ConstantPoolElement;
 import cz.cvut.run.classfile.Field;
@@ -72,6 +74,7 @@ public class ClassLoader {
 	ClassLoader(File file) throws Exception{
 		this.file = file;
 		if (this.file.exists() && !this.file.isDirectory()){
+			log.trace(file.getName());
 			readFile();
 			fis.close();
 		}else{
@@ -273,7 +276,7 @@ public class ClassLoader {
 					byte[] value = new byte[4]; 
 					fis.read(value, 0, 4);
 					constantPool.add(new ConstIntegerInfo(value));
-					log.trace("Constant pool value: \t" + Utils.getHexa(tagArr) + "\t" + Utils.getHexa(value));
+					log.trace("Constant pool " +(i+1) + " value: \t" + Utils.getHexa(tagArr) + "\t" + Utils.getHexa(value));
 					break;
 				}
 				case TAG_FLOAT:{
@@ -281,7 +284,7 @@ public class ClassLoader {
 					byte[] value = new byte[4]; 
 					fis.read(value, 0, 4);
 					constantPool.add(new ConstFloatInfo(value));
-					log.trace("Constant pool value: \t" + Utils.getHexa(tagArr) + "\t" + Utils.getHexa(value));
+					log.trace("Constant pool " +(i+1) + " value: \t" + Utils.getHexa(tagArr) + "\t" + Utils.getHexa(value));
 					break;
 				}
 				case TAG_LONG:{
@@ -291,7 +294,8 @@ public class ClassLoader {
 					fis.read(low, 0, 4);
 					fis.read(high, 0, 4);
 					constantPool.add(new ConstLongInfo(low, high));
-					log.trace("Constant pool value: \t" + Utils.getHexa(tagArr) + "\t" + Utils.getHexa(low)+ " " + Utils.getHexa(high));
+					log.trace("Constant pool " +(i+1) + " value: \t" + Utils.getHexa(tagArr) + "\t" + Utils.getHexa(low)+ " " + Utils.getHexa(high));
+					i++;
 					break;
 				}
 				case TAG_DOUBLE:{
@@ -301,7 +305,7 @@ public class ClassLoader {
 					fis.read(low, 0, 4);
 					fis.read(high, 0, 4);
 					constantPool.add(new ConstDoubleInfo(low, high));
-					log.trace("Constant pool value: \t" + Utils.getHexa(tagArr) + "\t" + Utils.getHexa(low)+ " " + Utils.getHexa(high));
+					log.trace("Constant pool " +(i+1) + " value: \t" + Utils.getHexa(tagArr) + "\t" + Utils.getHexa(low)+ " " + Utils.getHexa(high));
 					break;
 				}
 				case TAG_UTF8:{
@@ -318,7 +322,7 @@ public class ClassLoader {
 					}else if (utf8.toString().equals(Constants.LOCAL_VARIABLE_TABLE)){
 						this.linesTableIndex= constantPool.size();
 					}
-					log.trace("Constant pool value: \t" + Utils.getHexa(tagArr) + "\t" + Utils.getHexa(value));
+					log.trace("Constant pool " +(i+1) + " value: \t" + Utils.getHexa(tagArr) + "\t" + Utils.getHexa(value));
 					break;
 				}
 				case TAG_STRING:{
@@ -326,7 +330,7 @@ public class ClassLoader {
 					byte[] value = new byte[2]; 
 					fis.read(value, 0, 2);
 					constantPool.add(new ConstStringInfo(value));
-					log.trace("Constant pool value: \t" + Utils.getHexa(tagArr) + "\t" + Utils.getHexa(value));
+					log.trace("Constant pool " +(i+1) + " value: \t" + Utils.getHexa(tagArr) + "\t" + Utils.getHexa(value));
 					break;
 				}
 				case TAG_CLASS:{
@@ -334,7 +338,7 @@ public class ClassLoader {
 					byte[] value = new byte[2]; 
 					fis.read(value, 0, 2);
 					constantPool.add(new ConstClassInfo(value));
-					log.trace("Constant pool value: \t" + Utils.getHexa(tagArr) + "\t" + Utils.getHexa(value));
+					log.trace("Constant pool " +(i+1) + " value: \t" + Utils.getHexa(tagArr) + "\t" + Utils.getHexa(value));
 					break;
 				}
 				case TAG_FIELDREF:{
@@ -345,7 +349,7 @@ public class ClassLoader {
 					fis.read(name_and_type_index, 0, 2);
 					
 					constantPool.add(new ConstFieldRefInfo(class_index, name_and_type_index));
-					log.trace("Constant pool value: \t" + Utils.getHexa(tagArr) + "\t" + Utils.getHexa(class_index)+ "" + Utils.getHexa(name_and_type_index));
+					log.trace("Constant pool " +(i+1) + " value: \t" + Utils.getHexa(tagArr) + "\t" + Utils.getHexa(class_index)+ "" + Utils.getHexa(name_and_type_index));
 					break;
 				}
 				case TAG_METHODREF:{
@@ -356,7 +360,7 @@ public class ClassLoader {
 					fis.read(name_and_type_index, 0, 2);
 					
 					constantPool.add(new ConstMethodRefInfo(class_index, name_and_type_index));
-					log.trace("Constant pool value: \t" + Utils.getHexa(tagArr) + "\t" + Utils.getHexa(class_index)+ "" + Utils.getHexa(name_and_type_index));
+					log.trace("Constant pool " +(i+1) + " value: \t" + Utils.getHexa(tagArr) + "\t" + Utils.getHexa(class_index)+ "" + Utils.getHexa(name_and_type_index));
 					break;
 				}
 				case TAG_INTERFACE_METHODREF:{
@@ -367,7 +371,7 @@ public class ClassLoader {
 					fis.read(name_and_type_index, 0, 2);
 					
 					constantPool.add(new ConstInterfaceMethodRefInfo(class_index, name_and_type_index));
-					log.trace("Constant pool value: \t" + Utils.getHexa(tagArr) + "\t" + Utils.getHexa(class_index)+ "" + Utils.getHexa(name_and_type_index));
+					log.trace("Constant pool " +(i+1) + " value: \t" + Utils.getHexa(tagArr) + "\t" + Utils.getHexa(class_index)+ "" + Utils.getHexa(name_and_type_index));
 					break;
 				}
 				case TAG_NAME_AND_TYPE:{
@@ -378,15 +382,16 @@ public class ClassLoader {
 					fis.read(descriptor_index, 0, 2);
 					
 					constantPool.add(new ConstNameAndTypeInfo(class_index, descriptor_index));
-					log.trace("Constant pool value: \t" + Utils.getHexa(tagArr) + "\t" + Utils.getHexa(class_index)+ "" + Utils.getHexa(descriptor_index));
+					log.trace("Constant pool " +(i+1) + " value: \t" + Utils.getHexa(tagArr) + "\t" + Utils.getHexa(class_index)+ "" + Utils.getHexa(descriptor_index));
 					break;
 				}
 				default:
 					log.error("Unsupported tag in constant pool!");
-					throw new Exception("Unsupported tag in constant pool!");
+					throw new Exception("Unsupported tag in constant pool: " + Utils.getHexa(tag));
 			}
 		}
 		cf.setConstantPool(constantPool);
+		cf.setConstantPoolCount(constantPool.size());
 	}
 	
 	
@@ -411,6 +416,12 @@ public class ClassLoader {
 			result = new ExceptionsAttribute(attribute_name_index, attribute_length);
 		}else if(type.equals("ConstantValue")){
 			result = new ConstantValueAttribute(attribute_name_index, attribute_length);
+		}else if (type.equals("Signature")){
+			result = new SignatureAttribute(attribute_name_index, attribute_length);
+		}else if(type.equals("Deprecated")){
+			result = new DeprecatedAttribute(attribute_name_index, attribute_length);
+		}else if (type.equals("InnerClasses")){
+			//TODO
 		}
 		
 		attribute_info = new byte[result.getAttributeLength()];

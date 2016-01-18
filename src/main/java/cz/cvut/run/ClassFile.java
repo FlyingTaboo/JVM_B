@@ -50,6 +50,7 @@ public class ClassFile {
 		return constantPoolCount;
 	}
 	public void setConstantPoolCount(int constantPoolCount) {
+		log.trace("setted constantPool size: " + constantPoolCount);
 		this.constantPoolCount = constantPoolCount;
 	}
 	public byte[] getAccessFlags() {

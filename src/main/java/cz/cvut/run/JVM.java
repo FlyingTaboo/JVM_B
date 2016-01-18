@@ -38,8 +38,6 @@ public class JVM {
     	}
         
         ClassFile cf = classes.get(0).getClassFile();
-        int codeIndex = cf.getCodeIndex();
-        int lineNumberTableIndex = cf.getLineNumberTableIndex();
         Method mainMethod = cf.getMainMethod();
     	Heap heap = new Heap();
 
