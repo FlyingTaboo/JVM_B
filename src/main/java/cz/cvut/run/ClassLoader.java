@@ -421,7 +421,7 @@ public class ClassLoader {
 		}else if(type.equals("Deprecated")){
 			result = new DeprecatedAttribute(attribute_name_index, attribute_length);
 		}else if (type.equals("InnerClasses")){
-			//TODO
+			result = new Attribute(attribute_name_index, attribute_length);
 		}
 		
 		attribute_info = new byte[result.getAttributeLength()];
