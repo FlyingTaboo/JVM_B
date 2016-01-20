@@ -18,8 +18,7 @@ import cz.cvut.run.stack.StringBuilderReference;
 import cz.cvut.run.stack.StringReference;
 
 public class Core {
-	private static final Logger log = Logger.getLogger(Core.class);
-
+	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public static StackElement invokeCoreMethod(String clazzName, String methodName, StackElement[] locals,
 			ArrayList<ConstantPoolElement> constantPool) {

@@ -21,7 +21,7 @@ public class ApplicationTest {
 	private static final String TestWrongFile = TEST_CLASSES_WRONG_PATH + DELIMITER + "createdFiles.lst";
 
 	private static final String SatClassFile = DELIMITER + "Sat.class";
-	private static final String testClassFile = DELIMITER + "test.class";
+	private static final String testClassFile = DELIMITER + "test2.class";
 	private static final String AClassFile = DELIMITER + "A.class";
 	private static final String BClassFile = DELIMITER + "B.class";
 
@@ -98,7 +98,16 @@ public class ApplicationTest {
 		Assert.assertEquals(outContent.toString(), "foo\r\nbar2\r\n");
 	}
 
-	//@Test
+	@Test
+	public void testWriteAndRead() throws Exception {
+		ArrayList<String> paths = new ArrayList<String>();
+		String filePath = new java.io.File(".").getCanonicalPath() + TEST_CLASSES_PATH;
+		paths.add(filePath + testClassFile);
+		JVM.runJVM(paths, null);
+		Assert.assertEquals(outContent.toString(), "84");
+	}
+	
+	@Test
 	public void testParseByteToInt() {
 		Assert.assertEquals(12345, Utils.parseByteToInt(new byte[] { 48, 57 }));
 		Assert.assertEquals(1234512345, Utils.parseByteToInt(new byte[] { 73, -107, 41, -39 }));
