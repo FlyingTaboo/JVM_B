@@ -79,6 +79,11 @@ public class Method extends ClassElement {
 		log.error("Method doesnt have CODE attribute!");
 		throw new Exception("Method doesnt have CODE attribute!");
 	}
+
+
+	public boolean isNative() {
+		return (access_flags[0] & 0x01) == 0x01;
+	}
 	
 	
 

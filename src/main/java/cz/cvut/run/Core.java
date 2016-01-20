@@ -1,7 +1,6 @@
 package cz.cvut.run;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Stack;
 
 import org.apache.log4j.Logger;

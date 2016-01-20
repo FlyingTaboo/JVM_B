@@ -28,39 +28,39 @@ public class ApplicationTest {
 	private final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
 	private final ByteArrayOutputStream errContent = new ByteArrayOutputStream();
 
-	//@Before
+	@Before
 	public void setUpStreams() {
 		System.setOut(new PrintStream(outContent));
 		System.setErr(new PrintStream(errContent));
 	}
 
-	//@After
+	@After
 	public void cleanUpStreams() {
 		System.setOut(null);
 		System.setErr(null);
 	}
 
-	//@Test
+	@Test
 	public void testMain() throws Exception {
 		JVM.main(null);
 	}
 
-	//@Test(expected = java.lang.Exception.class)
+	@Test(expected = java.lang.Exception.class)
 	public void testDirectory() throws Exception {
 		JVM.main(new String[] { new java.io.File(".").getCanonicalPath() + TEST_CLASSES_PATH });
 	}
 
-	//@Test(expected = java.lang.Exception.class)
+	@Test(expected = java.lang.Exception.class)
 	public void testWrongPath() throws Exception {
 		JVM.main(new String[] { "wrong path" });
 	}
 
-	//@Test(expected = java.lang.Exception.class)
+	@Test(expected = java.lang.Exception.class)
 	public void testSimpleRightPathBadFile() throws Exception {
 		JVM.main(new String[] { new java.io.File(".").getCanonicalPath() + TestWrongFile });
 	}
 
-	//@Test
+	@Test
 	public void testSatRightPath1() throws Exception {
 		String input = new String("abc&&");
 		ArrayList<String> paths = new ArrayList<String>();
@@ -69,7 +69,7 @@ public class ApplicationTest {
 		Assert.assertEquals(result, "abc\n111");
 	}
 
-	//@Test
+	@Test
 	public void testSatRightPath2() throws Exception {
 		String input = new String("abc!d&|&");
 		ArrayList<String> paths = new ArrayList<String>();
@@ -78,7 +78,7 @@ public class ApplicationTest {
 		Assert.assertEquals(result, "abcd\n1100");
 	}
 
-	//@Test
+	@Test
 	public void testSatRightPath3() throws Exception {
 		String input = new String("abcdef&|&&&");
 		ArrayList<String> paths = new ArrayList<String>();
@@ -91,14 +91,9 @@ public class ApplicationTest {
 	public void testClasses() throws Exception {
 		ArrayList<String> paths = new ArrayList<String>();
 		String filePath = new java.io.File(".").getCanonicalPath() + TEST_CLASSES_PATH;
-		//paths.add(filePath + testClassFile);
-		//paths.add(filePath + BClassFile);
-		//paths.add(filePath + AClassFile);
-		//paths.add("D:\\rt\\Exception.class");
-		//paths.add("D:\\rt\\PrintStream.class"); // readattribute
-		//paths.add("D:\\rt\\Stack.class");// readattribute
-		paths.add("D:\\rt\\String.class");// readattribute
-		//paths.add("D:\\rt\\StringBuilder.class");
+		paths.add(filePath + testClassFile);
+		paths.add(filePath + BClassFile);
+		paths.add(filePath + AClassFile);
 		JVM.runJVM(paths, null);
 		Assert.assertEquals(outContent.toString(), "foo\r\nbar2\r\n");
 	}

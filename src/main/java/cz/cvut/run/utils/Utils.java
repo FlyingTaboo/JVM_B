@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import cz.cvut.run.ClassFile;
 import cz.cvut.run.ClassLoader;
 import cz.cvut.run.classfile.ConstantPoolElement;
+import cz.cvut.run.classfile.Method;
 import cz.cvut.run.constants.Constants;
 import cz.cvut.run.stack.ObjectReference;
 import cz.cvut.run.stack.StackElement;
@@ -94,7 +95,10 @@ public class Utils {
 		
 	}
 
-	public static ClassFile getSuperClassFile(StackElement e, ArrayList<ClassLoader> classes){
+	public static ClassFile getSuperClassFile(String clazzName, StackElement e, ArrayList<ClassLoader> classes){
+		if (!(e instanceof ObjectReference)){
+			return getClassFileByClassName(clazzName, classes);
+		}
 		ObjectReference ref = (ObjectReference) e;
 		String refClassName = ref.getClassName();
 		

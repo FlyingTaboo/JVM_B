@@ -13,8 +13,6 @@ import cz.cvut.run.classfile.constantpool.ConstClassInfo;
 import cz.cvut.run.classfile.constantpool.ConstFieldRefInfo;
 import cz.cvut.run.classfile.constantpool.ConstMethodRefInfo;
 import cz.cvut.run.classfile.constantpool.ConstNameAndTypeInfo;
-import cz.cvut.run.classfile.constantpool.ConstStringInfo;
-import cz.cvut.run.classfile.constantpool.ConstUtf8Info;
 import cz.cvut.run.constants.Constants;
 import cz.cvut.run.stack.ArrayReference;
 import cz.cvut.run.stack.ByteValue;
@@ -55,7 +53,7 @@ public class Frame {
 		this.constantPool = cf.getConstantPool();
 		this.heap = heap;
 		this.codeAttribute = m.getCodeAttribute(codeIndex);
-		localVariablesArray = new StackElement[codeAttribute.getMaxLocals()];
+		localVariablesArray = new StackElement[codeAttribute.getMaxLocals()+1];
 		for (int i=0; locals!=null && i<locals.length; i++){
 			localVariablesArray[i] = locals[i];
 		}
@@ -179,7 +177,7 @@ public class Frame {
 				case Constants.INSTRUCTION_getstatic: {
 					byte index1 = byteCode.get(pc++);
 					byte index2 = byteCode.get(pc++);
-					short s = (short) ((index1 << 8) | index2);
+					short s = (short)(short) (((index1&0xFF) << 8) | (index2&0xFF));
 					ConstantPoolElement e = this.constantPool.get(s);
 					operandStack.push(new StackElement(e));
 					break;
@@ -462,7 +460,7 @@ public class Frame {
 					byte index1 = byteCode.get(pc++);
 					byte index2 = byteCode.get(pc++);
 					
-					int methodIndex = ((index1 << 8) | index2);
+					int methodIndex = (short) (((index1&0xFF) << 8) | (index2&0xFF));	
 					StackElement e = invokeSpecial(methodIndex);
 					if (e!=null){
 						operandStack.push(e);
@@ -473,7 +471,7 @@ public class Frame {
 					byte index1 = byteCode.get(pc++);
 					byte index2 = byteCode.get(pc++);
 					
-					int methodIndex = ((index1 << 8) | index2);
+					int methodIndex =(short) (((index1&0xFF) << 8) | (index2&0xFF));
 
 					StackElement e = invokeStatic(methodIndex);
 					if (e!=null){
@@ -486,7 +484,7 @@ public class Frame {
 					byte index1 = byteCode.get(pc++);
 					byte index2 = byteCode.get(pc++);
 					
-					int methodIndex = ((index1 << 8) | index2);
+					int methodIndex =(short) (((index1&0xFF) << 8) | (index2&0xFF));
 					
 					StackElement e = invokeVirtual(methodIndex);
 					if (e != null){
@@ -546,7 +544,7 @@ public class Frame {
 				case Constants.INSTRUCTION_new: {
 					byte index1 = byteCode.get(pc++);
 					byte index2 = byteCode.get(pc++);
-					int index = ((index1 << 8) | index2)-1;
+					int index =(short) (((index1&0xFF) << 8) | (index2&0xFF))-1;
 					ConstClassInfo clazz = (ConstClassInfo)constantPool.get(index); 
 					operandStack.push(createNewObject(constantPool.get(clazz.getNameIndex()-1).toString()));
 					break;
@@ -560,6 +558,8 @@ public class Frame {
 						ArrayReference ar = new ArrayReference(array);
 						heap.addToHeap(ar);
 						operandStack.push(ar);
+					}else{
+						throw new Exception();
 					}
 					break;
 				}
@@ -572,7 +572,7 @@ public class Frame {
 					byte index2 = byteCode.get(pc++);
 					StackElement value = operandStack.pop();
 					ObjectReference objRef = (ObjectReference) operandStack.pop();
-					int index = ((index1 << 8) | index2)-1;
+					int index =(short) (((index1&0xFF) << 8) | (index2&0xFF))-1;
 					ConstFieldRefInfo field = (ConstFieldRefInfo) constantPool.get(index);
 					ConstNameAndTypeInfo nati = (ConstNameAndTypeInfo) constantPool.get(field.getNameAndTypeIndex()-1);
 					
@@ -584,7 +584,7 @@ public class Frame {
 					byte index1 = byteCode.get(pc++);
 					byte index2 = byteCode.get(pc++);
 					ObjectReference objRef = (ObjectReference) operandStack.pop();
-					int index = ((index1 << 8) | index2)-1;
+					int index =(short) (((index1&0xFF) << 8) | (index2&0xFF))-1;
 					ConstFieldRefInfo field = (ConstFieldRefInfo) constantPool.get(index);
 					ConstNameAndTypeInfo nati = (ConstNameAndTypeInfo) constantPool.get(field.getNameAndTypeIndex()-1);
 					
@@ -602,6 +602,14 @@ public class Frame {
 					operandStack.clear();
 					return null;
 					//break;
+				}
+				case Constants.INSTRUCTION_monitorenter:{
+					operandStack.pop();
+					break;
+				}
+				case Constants.INSTRUCTION_monitorexit:{
+					operandStack.pop();
+					break;
 				}
 				default:{
 					log.error("Unsupported instruction: " + Utils.getHexa(instruction));
@@ -675,7 +683,7 @@ public class Frame {
 			return e1;
 		}else{
 			if (methodName.equals("<init>")) return null;
-			ClassFile cf = Utils.getSuperClassFile(e, classes);
+			ClassFile cf = Utils.getSuperClassFile(clazzName, e, classes);
 			Method method = cf.getMethodByName(methodName);
 			Frame f = new Frame(method, cf, this.classes, heap, locals, this);
 			return f.execute();
@@ -727,15 +735,6 @@ public class Frame {
 			}
 		}
 		return true;
-		/*if (clazz.equals("java/util/Stack") || 
-				clazz.equals("java/lang/StringBuilder") || 
-				clazz.equals("java/lang/Exception") || 
-				clazz.equals("java/lang/String") || 
-				clazz.equals("java/lang/Character")|| 
-				clazz.equals("java/io/PrintStream")){
-			return true;
-		}
-		return false;*/
 	}
 
 

@@ -177,6 +177,10 @@ public class ClassFile {
 		throw new Exception("Not found method " + name + " in class file!");
 	}
 	public String getName() {
+		if(!(this.constantPool.get(Utils.parseByteToInt(this.getThisClass())-1) instanceof ConstClassInfo)){
+			ConstUtf8Info utf = (ConstUtf8Info) this.constantPool.get(Utils.parseByteToInt(this.getThisClass())-1);
+			return utf.toString();
+		}
 		ConstClassInfo cci = (ConstClassInfo) this.constantPool.get(Utils.parseByteToInt(this.getThisClass())-1);
 		String name = this.constantPool.get(cci.getNameIndex()-1).toString();
 		return name;
