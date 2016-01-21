@@ -21,7 +21,8 @@ public class ApplicationTest {
 	private static final String TestWrongFile = TEST_CLASSES_WRONG_PATH + DELIMITER + "createdFiles.lst";
 
 	private static final String SatClassFile = DELIMITER + "Sat.class";
-	private static final String testClassFile = DELIMITER + "test2.class";
+	private static final String testClassFile = DELIMITER + "test.class";
+	private static final String test2ClassFile = DELIMITER + "test2.class";
 	private static final String AClassFile = DELIMITER + "A.class";
 	private static final String BClassFile = DELIMITER + "B.class";
 
@@ -102,9 +103,9 @@ public class ApplicationTest {
 	public void testWriteAndRead() throws Exception {
 		ArrayList<String> paths = new ArrayList<String>();
 		String filePath = new java.io.File(".").getCanonicalPath() + TEST_CLASSES_PATH;
-		paths.add(filePath + testClassFile);
+		paths.add(filePath + test2ClassFile);
 		JVM.runJVM(paths, null);
-		Assert.assertEquals(outContent.toString(), "84");
+		Assert.assertEquals(outContent.toString(), "The first line\r\nThe second line\r");
 	}
 	
 	@Test

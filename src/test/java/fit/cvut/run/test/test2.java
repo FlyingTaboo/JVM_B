@@ -21,9 +21,10 @@ public class test2 {
 	
 	private static void read() throws IOException{
 		FileReader reader = new FileReader("D:\\the-file-name.txt");
-		int i = reader.read();
+		char[] buffer = new char[32];
+		reader.read(buffer);
 		reader.close();
-		System.out.println(i);
+		System.out.println(buffer);
 	}
 }
 

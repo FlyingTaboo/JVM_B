@@ -129,6 +129,10 @@ public class Frame {
 					localVariablesArray[index] = operandStack.pop();
 					break;
 				}
+				case Constants.INSTRUCTION_astore_0:{
+					localVariablesArray[0] = operandStack.pop();
+					break;
+				}
 				case Constants.INSTRUCTION_astore_1: {
 					localVariablesArray[1] = operandStack.pop();
 					break;
@@ -558,8 +562,13 @@ public class Frame {
 						ArrayReference ar = new ArrayReference(array);
 						heap.addToHeap(ar);
 						operandStack.push(ar);
+					}else if (type==5){
+						char[] array = new char[((IntValue) countE).getIntValue()];
+						ArrayReference ar = new ArrayReference(array);
+						heap.addToHeap(ar);
+						operandStack.push(ar);
 					}else{
-						throw new Exception();
+						throw new Exception("Type: " + type);
 					}
 					break;
 				}
@@ -609,6 +618,13 @@ public class Frame {
 				}
 				case Constants.INSTRUCTION_monitorexit:{
 					operandStack.pop();
+					break;
+				}
+				case Constants.INSTRUCTION_sipush:{
+					byte branchbyte1 = byteCode.get(pc++);
+					byte branchbyte2 = byteCode.get(pc++);
+					int index =(short) (((branchbyte1&0xFF) << 8) | (branchbyte2&0xFF));
+					operandStack.push(new IntValue(index));
 					break;
 				}
 				default:{
